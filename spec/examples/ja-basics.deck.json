@@ -1,0 +1,28 @@
+{
+  "format": "deck/1",
+  "deck": {
+    "id": "examples.ja-basics",
+    "title": "工作里的日语",
+    "source": "examples",
+    "lang": { "target": "ja", "native": "zh" },
+    "updatedAt": "2026-11-10T08:00:00Z"
+  },
+  "cards": [
+    {
+      "id": "nennotame",
+      "kind": "phrase",
+      "front": "以防万一",
+      "back": "念のため",
+      "reading": "ねんのため",
+      "example": "念のため、先にバックアップを取っておいてください。"
+    },
+    {
+      "id": "owatte-kara",
+      "kind": "pattern",
+      "front": "等测试跑完再提交",
+      "back": "テストが終わってからコミットしてください。",
+      "pattern": "___が終わってから___てください",
+      "tiles": ["テストが", "終わってから", "コミットして", "ください。"]
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+# The Xcode project is generated from this file: run `xcodegen` after
+# changing it, or after adding or removing files.
+name: Snack
+options:
+  bundleIdPrefix: com.kadaliao
+  deploymentTarget:
+    iOS: "18.0"
+  developmentLanguage: zh-Hans
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    # Raise it whenever NSUbiquitousContainers changes, or iCloud keeps the old one.
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: HMDAVG9B8J
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+packages:
+  SnackKit:
+    path: SnackKit
+targets:
+  Snack:
+    type: application
+    platform: iOS
+    sources:
+      - path: Snack
+    dependencies:
+      - package: SnackKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kadaliao.snack
+        PRODUCT_NAME: Snack
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Snack/Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: 卡片零食
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.education
+    entitlements:
+      path: Snack/Snack.entitlements
+      properties:
+        com.apple.developer.icloud-container-identifiers: [iCloud.com.kadaliao.snack]
+        com.apple.developer.icloud-services: [CloudDocuments]
+        com.apple.developer.ubiquity-container-identifiers: [iCloud.com.kadaliao.snack]
+    info:
+      path: Snack/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: zh-Hans
+        ITSAppUsesNonExemptEncryption: false
+        # The container's Documents folder shows in iCloud Drive as "Snack", so
+        # producers on the Mac and the Files app can put decks in its Inbox.
+        NSUbiquitousContainers:
+          iCloud.com.kadaliao.snack:
+            NSUbiquitousContainerIsDocumentScopePublic: true
+            NSUbiquitousContainerName: Snack
+            NSUbiquitousContainerSupportedFolderLevels: Any
+schemes:
+  Snack:
+    build:
+      targets:
+        Snack: all
+    run:
+      config: Debug
+    archive:
+      config: Release

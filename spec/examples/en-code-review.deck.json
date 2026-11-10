@@ -1,0 +1,42 @@
+{
+  "format": "deck/1",
+  "deck": {
+    "id": "examples.en-code-review",
+    "title": "代码评审常用英语",
+    "source": "examples",
+    "lang": { "target": "en", "native": "zh" },
+    "description": "写评审意见时用得上的说法",
+    "updatedAt": "2026-11-10T08:00:00Z"
+  },
+  "cards": [
+    {
+      "id": "nit",
+      "kind": "phrase",
+      "front": "小问题，不改也行",
+      "back": "nit",
+      "example": "nit: this variable could be named more clearly.",
+      "distractors": ["minor bug", "blocker", "hotfix"]
+    },
+    {
+      "id": "out-of-scope",
+      "kind": "phrase",
+      "front": "超出这次改动的范围",
+      "back": "out of scope for this PR",
+      "example": "Renaming the module is out of scope for this PR."
+    },
+    {
+      "id": "follow-up",
+      "kind": "pattern",
+      "front": "这个可以以后单独提一个 PR 再做",
+      "back": "This can be done in a follow-up PR.",
+      "pattern": "This can be done in a follow-up ___."
+    },
+    {
+      "id": "lgtm",
+      "kind": "qa",
+      "front": "LGTM 是什么意思？",
+      "back": "Looks good to me",
+      "distractors": ["Let's get the merge", "Logic goes to main", "Looks great, try more"]
+    }
+  ]
+}

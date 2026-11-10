@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kadaliao/snack/spec/deck.schema.json",
+  "title": "Snack deck/1",
+  "description": "One deck of flashcards, as a whole snapshot. See deck-format.md.",
+  "type": "object",
+  "required": ["format", "deck", "cards"],
+  "properties": {
+    "format": { "const": "deck/1" },
+    "deck": {
+      "type": "object",
+      "required": ["id", "title"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "source": { "type": "string", "maxLength": 100 },
+        "lang": {
+          "type": "object",
+          "properties": {
+            "target": { "type": "string", "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]+)*$" },
+            "native": { "type": "string", "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]+)*$" }
+          }
+        },
+        "description": { "type": "string", "maxLength": 1000 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "cards": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/card" }
+    }
+  },
+  "$defs": {
+    "card": {
+      "type": "object",
+      "required": ["id", "kind", "front", "back"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "kind": { "enum": ["phrase", "pattern", "fix", "qa"] },
+        "front": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "back": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "reading": { "type": "string", "maxLength": 500 },
+        "context": { "type": "string", "maxLength": 2000 },
+        "example": { "type": "string", "maxLength": 2000 },
+        "why": { "type": "string", "maxLength": 500 },
+        "pattern": { "type": "string", "maxLength": 500 },
+        "distractors": { "type": "array", "items": { "type": "string", "minLength": 1 }, "maxItems": 10 },
+        "tiles": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 2, "maxItems": 20 },
+        "tags": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "seen": { "type": "integer", "minimum": 0 },
+        "addedAt": { "type": "string", "format": "date-time" },
+        "deleted": { "type": "boolean" }
+      }
+    }
+  }
+}
