@@ -4,13 +4,18 @@ import NaturalLanguage
 /// Cutting a sentence written without spaces into tiles.
 enum Segmenter {
     static let most = 8
+    /// Shorter than this and it is a word or two, nothing to put together: 何名様
+    /// would come apart into 何 / 名 / 様.
+    static let least = 7
 
     /// Japanese or Chinese cut into words: in Japanese each run of hiragana (a
     /// particle, an ending) goes with the word before it, since Apple's tokenizer
     /// cuts finer than a learner thinks ("終わっ / て / から" is "終わってから"); then
-    /// the shortest neighbours are joined until there are at most eight. Nil when
-    /// that is less than two pieces, or the pieces do not make up the text.
+    /// the shortest neighbours are joined until there are at most eight. Nil for a
+    /// text of a few characters, when that is less than two pieces, or when the
+    /// pieces do not make up the text.
     static func pieces(_ text: String, language code: String?) -> [String]? {
+        guard Answer.squash(text).count >= least else { return nil }
         let language: NLLanguage = switch code?.lowercased().prefix(2) {
         case "ja": .japanese
         case "zh": .simplifiedChinese

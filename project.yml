@@ -10,9 +10,9 @@ options:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    MARKETING_VERSION: "0.3.0"
+    MARKETING_VERSION: "0.4.0"
     # Raise it whenever NSUbiquitousContainers changes, or iCloud keeps the old one.
-    CURRENT_PROJECT_VERSION: "3"
+    CURRENT_PROJECT_VERSION: "4"
     DEVELOPMENT_TEAM: HMDAVG9B8J
     CODE_SIGN_STYLE: Automatic
     ENABLE_USER_SCRIPT_SANDBOXING: YES
@@ -48,13 +48,23 @@ targets:
       path: Snack/Snack.entitlements
       properties:
         com.apple.developer.icloud-container-identifiers: [iCloud.com.kadaliao.snack]
-        com.apple.developer.icloud-services: [CloudDocuments]
+        com.apple.developer.icloud-services: [CloudDocuments, CloudKit]
+        # CloudKit tells the app of changes made on other devices by push.
+        aps-environment: development
         com.apple.developer.ubiquity-container-identifiers: [iCloud.com.kadaliao.snack]
         com.apple.security.application-groups: [group.com.kadaliao.snack]
     info:
       path: Snack/Info.plist
       properties:
         CFBundleDevelopmentRegion: zh-Hans
+        # Decks opened in the app from Files, the share sheet or AirDrop: a copy
+        # comes in, and goes into the iCloud Inbox.
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Snack 牌组
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [public.json]
+        LSSupportsOpeningDocumentsInPlace: false
+        UIBackgroundModes: [remote-notification]
         # snack://lesson, from the widget: start a lesson.
         CFBundleURLTypes:
           - CFBundleURLName: com.kadaliao.snack

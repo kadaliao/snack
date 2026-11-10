@@ -7,8 +7,9 @@
 // whole file; warnings are things that still load but play worse. Exits 1 on any
 // error. No dependencies.
 
-import { readFileSync } from 'node:fs'
+import { readFileSync, realpathSync } from 'node:fs'
 import { basename } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const KINDS = ['phrase', 'pattern', 'fix', 'qa']
 const LANG = /^[A-Za-z]{2,3}(-[A-Za-z0-9]+)*$/
@@ -141,4 +142,6 @@ function main(paths) {
   return failed ? 1 : 0
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) process.exitCode = main(process.argv.slice(2))
+// Run as a command, also through a symlink (the make-deck skill has one).
+const isMain = process.argv[1] !== undefined && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)
+if (isMain) process.exitCode = main(process.argv.slice(2))

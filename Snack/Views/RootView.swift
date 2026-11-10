@@ -19,5 +19,8 @@ struct RootView: View {
         }
         .tint(Color.snack)
         .onChange(of: lessonAsked) { tab = "today" }
+        .alert(inbox.notice ?? "", isPresented: Binding { inbox.notice != nil } set: { if !$0 { inbox.notice = nil } }) {
+            Button("好") { inbox.notice = nil }
+        }
     }
 }

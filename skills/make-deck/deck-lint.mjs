@@ -1,0 +1,1 @@
+../../tools/deck-lint.mjs

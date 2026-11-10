@@ -42,11 +42,22 @@ struct SnackApp: App {
     private var root: some View {
         RootView(inbox: inbox, study: study, lessonAsked: lessonAsked)
             .onOpenURL { url in
-                if url == WidgetSnapshot.lessonURL { lessonAsked += 1 }
+                if url == WidgetSnapshot.lessonURL {
+                    lessonAsked += 1
+                } else if url.isFileURL {
+                    // A deck opened in the app from Files, the share sheet or AirDrop.
+                    Task { await inbox.importDeck(from: url) }
+                }
             }
             .task {
                 inbox.onRepeated = { [study] keys in study.recordRepeated(keys) }
                 await inbox.start()
+                #if DEBUG
+                // `-SnackImport <path>`: imports that file, as if opened from Files.
+                if let path = UserDefaults.standard.string(forKey: "SnackImport") {
+                    await inbox.importDeck(from: URL(filePath: path))
+                }
+                #endif
             }
     }
 }

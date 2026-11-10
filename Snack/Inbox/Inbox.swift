@@ -37,7 +37,11 @@ final class Inbox {
     /// Told of fix cards a producer saw again: the same mistake made again.
     @ObservationIgnored var onRepeated: (([CardKey]) -> Void)?
 
+    /// What the last import did, to tell the learner.
+    var notice: String?
+
     private let libraryURL: URL
+    private var inboxURL: URL?
     private var query: NSMetadataQuery?
     private var isReading = false
     private var isReadAgain = false
@@ -62,7 +66,9 @@ final class Inbox {
             state = .noICloud
             return
         }
-        await Task.detached { Inbox.prepare(documents.appending(path: "Inbox")) }.value
+        let inbox = documents.appending(path: "Inbox")
+        await Task.detached { Inbox.prepare(inbox) }.value
+        inboxURL = inbox
         watch()
         state = .watching
     }
@@ -158,6 +164,51 @@ final class Inbox {
 
     struct ReadProblem: Error {
         var message: String
+    }
+
+    /// Copies a deck file from elsewhere (Files, the share sheet, AirDrop) into the
+    /// Inbox, as a producer of its own: `imported.<its name>`. Importing it again
+    /// replaces that copy. Sets `notice` to how it went.
+    func importDeck(from url: URL) async {
+        guard let inbox = inboxURL else {
+            notice = "导入不了：没有 iCloud。在「设置」里登录 Apple 账户并打开 iCloud 云盘。"
+            return
+        }
+        let result = await Task.detached { Inbox.copyIn(url, to: inbox) }.value
+        switch result {
+        case .success(let file):
+            notice = "导入了「\(file.deck.title)」，\(file.cards.count) 张卡。"
+            refresh()
+        case .failure(let problem):
+            notice = "\(url.lastPathComponent) 导入不了：\(problem.message)"
+        }
+    }
+
+    nonisolated private static func copyIn(_ url: URL, to inbox: URL) -> Result<DeckFile, ReadProblem> {
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        let file: DeckFile
+        switch readFile(url) {
+        case .success(let read): file = read
+        case .failure(let problem): return .failure(problem)
+        }
+        var name = url.lastPathComponent
+        if !name.hasSuffix(".deck.json") {
+            name = file.deck.id.replacingOccurrences(of: "/", with: "-") + ".deck.json"
+        }
+        if !name.hasPrefix("imported.") { name = "imported." + name }
+        guard let data = try? Data(contentsOf: url) else { return .failure(ReadProblem(message: "读不了这个文件")) }
+        let target = inbox.appending(path: name)
+        var written = false
+        var coordination: NSError?
+        NSFileCoordinator().coordinate(writingItemAt: target, options: .forReplacing, error: &coordination) { target in
+            written = (try? data.write(to: target, options: .atomic)) != nil
+        }
+        // What the system handed over in the app's own folder is a copy: done with it.
+        if url.path.contains("/Documents/Inbox/"), !url.path.contains("Mobile Documents") {
+            try? FileManager.default.removeItem(at: url)
+        }
+        return written ? .success(file) : .failure(ReadProblem(message: "写不进 iCloud 的收件箱"))
     }
 
     nonisolated private static func readFile(_ url: URL) -> Result<DeckFile, ReadProblem> {

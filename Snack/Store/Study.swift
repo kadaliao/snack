@@ -1,3 +1,5 @@
+import CloudKit
+import CoreData
 import Foundation
 import Observation
 import SnackKit
@@ -66,8 +68,10 @@ final class LessonRecord {
     }
 }
 
-/// The learner's progress: the review log and the lessons, kept on the phone, and
-/// what follows from them (each card's memory, the streak, the day's lessons).
+/// The learner's progress: the review log and the lessons, kept on the device and
+/// synced through the learner's private CloudKit database, and what follows from
+/// them (each card's memory, the streak, the day's XP). Reviews from another
+/// device come in any order; the log is played back again, in order, each time.
 @MainActor
 @Observable
 final class Study {
@@ -77,24 +81,41 @@ final class Study {
     private(set) var xpByDay: [Day: Int] = [:]
     /// Why progress cannot be kept, if it cannot.
     private(set) var problem: String?
+    /// How syncing went last.
+    private(set) var sync: Sync = .waiting
+
+    enum Sync: Equatable {
+        case waiting
+        case off
+        case done(Date)
+        case failed(String)
+    }
 
     @ObservationIgnored private var container: ModelContainer?
+    @ObservationIgnored private var observers: [NSObjectProtocol] = []
+    @ObservationIgnored private var reloading: Task<Void, Never>?
 
     init(inMemory: Bool = false) {
         do {
-            // No CloudKit yet: one device, and the log alone, until M3.
-            let config = ModelConfiguration("Progress", isStoredInMemoryOnly: inMemory, cloudKitDatabase: .none)
+            let config = ModelConfiguration(
+                "Progress", isStoredInMemoryOnly: inMemory,
+                cloudKitDatabase: inMemory ? .none : .private(Inbox.containerID)
+            )
             container = try ModelContainer(for: ReviewRecord.self, LessonRecord.self, configurations: config)
         } catch {
             problem = "复习记录存不下来：\(error.localizedDescription)"
         }
+        if inMemory { sync = .off }
         load()
+        watchSync()
     }
 
     private var context: ModelContext? { container?.mainContext }
 
     private func load() {
         guard let context else { return }
+        lessonsByDay = [:]
+        xpByDay = [:]
         do {
             let reviews = try context.fetch(FetchDescriptor<ReviewRecord>()).compactMap(\.review)
             progress = Progress(reviews, scheduler: scheduler)
@@ -130,6 +151,36 @@ final class Study {
         save()
         lessonsByDay[day, default: 0] += 1
         xpByDay[day, default: 0] += run.xp
+    }
+
+    /// Reviews and lessons from other devices come in through CloudKit: play the
+    /// log back again once they stop coming for a moment. And keep how syncing went.
+    private func watchSync() {
+        let center = NotificationCenter.default
+        observers.append(center.addObserver(forName: .NSPersistentStoreRemoteChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.reloadSoon() }
+        })
+        observers.append(center.addObserver(forName: NSPersistentCloudKitContainer.eventChangedNotification, object: nil, queue: .main) { [weak self] note in
+            guard let event = note.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey] as? NSPersistentCloudKitContainer.Event,
+                  let end = event.endDate
+            else { return }
+            let failure = event.error.map { error in
+                (error as? CKError)?.code == .notAuthenticated ? "没有登录 iCloud" : (error as NSError).localizedDescription
+            }
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                if let failure { self.sync = .failed(failure) } else if event.succeeded { self.sync = .done(end) }
+            }
+        })
+    }
+
+    private func reloadSoon() {
+        reloading?.cancel()
+        reloading = Task {
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            load()
+        }
     }
 
     private func save() {

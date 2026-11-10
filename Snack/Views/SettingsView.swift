@@ -41,6 +41,12 @@ struct SettingsView: View {
                     }
                 }
 
+                Section {
+                    LabeledContent("iCloud 同步", value: syncLine)
+                } footer: {
+                    Text("复习记录和连胜通过 iCloud 同步到你登录同一个 Apple 账户的 iPhone 和 iPad。牌组本身走 iCloud 云盘的 Snack 文件夹。")
+                }
+
                 Section("声音") {
                     Toggle("答完朗读答案", isOn: $speaks)
                     Toggle("音效", isOn: $sounds)
@@ -76,6 +82,15 @@ struct SettingsView: View {
         } set: { date in
             let c = Calendar.current.dateComponents([.hour, .minute], from: date)
             remindAt = (c.hour ?? 20) * 60 + (c.minute ?? 0)
+        }
+    }
+
+    private var syncLine: String {
+        switch study.sync {
+        case .waiting: "等待中"
+        case .off: "关闭"
+        case .done(let date): "已同步 · \(date.formatted(date: .omitted, time: .shortened))"
+        case .failed(let message): "出错了：\(message)"
         }
     }
 

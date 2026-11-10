@@ -222,12 +222,13 @@ public enum Questions {
         return nil
     }
 
-    /// Short enough to type: a few words, or a few characters without spaces.
+    /// Short enough to type: a few words, or a short phrase without spaces
+    /// (コーヒーを一つください is eleven).
     static func isTypeable(_ entry: Entry) -> Bool {
         let back = entry.card.back
         return entry.isSpaced
             ? Answer.words(back).count <= 6 && back.count <= 40
-            : Answer.squash(back).count <= 8
+            : Answer.squash(back).count <= 12
     }
 
     /// Short on both sides, to fit a column of five; and not a fix card, whose

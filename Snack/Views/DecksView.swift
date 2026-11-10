@@ -6,6 +6,8 @@ struct DecksView: View {
     let inbox: Inbox
     let study: Study
 
+    @State private var isImporting = false
+
     var body: some View {
         NavigationStack {
             List {
@@ -14,7 +16,7 @@ struct DecksView: View {
                         ContentUnavailableView(
                             "还没有牌组",
                             systemImage: "tray",
-                            description: Text("把 .deck.json 文件放进 iCloud 云盘的 Snack › Inbox 文件夹，这里就会出现。")
+                            description: Text("把 .deck.json 文件放进 iCloud 云盘的 Snack › Inbox 文件夹，或者点右上角的 + 导入，这里就会出现。")
                         )
                     }
                 } else {
@@ -42,6 +44,17 @@ struct DecksView: View {
             }
             .navigationTitle("牌组")
             .refreshable { inbox.refresh() }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("导入牌组", systemImage: "plus") { isImporting = true }
+                }
+            }
+            .fileImporter(isPresented: $isImporting, allowedContentTypes: [.json], allowsMultipleSelection: true) { result in
+                guard case .success(let urls) = result else { return }
+                Task {
+                    for url in urls { await inbox.importDeck(from: url) }
+                }
+            }
         }
     }
 

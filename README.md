@@ -2,7 +2,7 @@
 
 碎片时间刷的 iPhone 闪卡 app。卡片不用自己做：它们从 iCloud 里的一个文件夹流进来，比如 [prompt-en](https://github.com/kadaliao/claude-mods/tree/main/prompt-en) 写 prompt 时收的生词本，或者按格式生成的整套牌组。
 
-现在是 M2：八种玩法，越熟越难；XP、连对加成和冻结卡；音效；桌面和锁屏小组件。更多来源（AI 出整套牌组、分享导入）和 iPad 同步在 M3。
+现在是 M3：八种玩法，越熟越难；XP、连对加成和冻结卡；桌面和锁屏小组件；复习记录通过 iCloud 在 iPhone 和 iPad 之间同步；AI 出整套牌组（`make-deck` skill）、从「文件」和分享菜单导入牌组。TestFlight 发版见 [docs/releasing.md](docs/releasing.md)。
 
 ## 怎么刷
 
@@ -43,6 +43,13 @@ iCloud 云盘 / Snack / Inbox
 - 格式：[spec/deck-format.md](spec/deck-format.md)，以及 [`deck.schema.json`](spec/deck.schema.json)、[示例](spec/examples/)。
 - 校验：`node tools/deck-lint.mjs <文件>...`。
 - prompt-en 0.5.0 起会自动导出生词本；也可以在会话里用 `/vocab export` 手动导出。
+- 让 Claude 出一整套：装上 [`make-deck`](skills/make-deck/SKILL.md) skill，跟 Claude Code 说「做一套日语点餐的卡片」，它按格式生成、校验，放进收件箱：
+
+  ```bash
+  ln -s "$PWD/skills/make-deck" ~/.claude/skills/make-deck
+  ```
+
+- 在手机上导入：「牌组」右上角的 +，或者在「文件」、微信、隔空投送里把 `.deck.json` 用卡片零食打开。导入的文件会复制进收件箱，名字前面加 `imported.`。
 
 文件归写它们的程序所有，卡片零食只读不改。生产者每次都可以把整个牌组重写一遍：同一个 `id` 的卡片算同一张；从文件里消失的卡片照样保留；只有写了 `"deleted": true` 的才会隐藏。
 
@@ -54,10 +61,12 @@ iCloud 云盘 / Snack / Inbox
 | `Snack/` | iOS app：iCloud 收件箱（`Inbox/`）、复习记录（`Store/`，SwiftData 里只追加的日志）、提醒（`Notify/`）、朗读和音效（`Speech/`、`Sounds/`）和界面（`Views/`） |
 | `SnackWidget/`、`Shared/` | 小组件。app 把当天的摘要写进 App Group `group.com.kadaliao.snack`，小组件从摘要推算之后的样子 |
 | `SnackUITests/` | 把一节课从头刷到尾，各种玩法走一遍；小组件的链接和样子 |
+| `skills/make-deck/` | 生成牌组的 Claude Code skill |
 | `spec/` | 牌组格式 |
 | `tools/deck-lint.mjs` | 牌组校验，零依赖 |
 | `scripts/device.sh` | 编译、签名，装到连着的 iPhone 上 |
 | `scripts/make-sounds.py` | 用正弦波合成音效，改了声音就重跑一遍 |
+| `scripts/testflight.sh` 等 | 发 TestFlight：归档上传、提交审核、邀请测试员，见 [docs/releasing.md](docs/releasing.md) |
 
 ## 开发
 
@@ -73,7 +82,7 @@ TEST_RUNNER_SNACK_SHOTS=/tmp/shots xcodebuild test -project Snack.xcodeproj -sch
 
 界面测试用的是模拟器里已有的牌组，复习记录只放在内存里，不碰真实进度。
 
-Xcode 工程由 `project.yml` 生成，不进仓库。签名要 Xcode 登录开发者账号（Xcode › Settings › Accounts）：第一次编译会建出 App ID、iCloud 容器 `iCloud.com.kadaliao.snack` 和描述文件。
+Xcode 工程由 `project.yml` 生成，不进仓库。签名要 Xcode 登录开发者账号（Xcode › Settings › Accounts）：第一次编译会建出 App ID、iCloud 容器 `iCloud.com.kadaliao.snack`（iCloud 云盘和 CloudKit 共用）、App Group 和描述文件。
 
 Bundle ID `com.kadaliao.snack`，iOS 18，Swift 6。
 

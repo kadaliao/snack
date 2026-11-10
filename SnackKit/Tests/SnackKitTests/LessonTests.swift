@@ -281,6 +281,8 @@ private let known: Memory = {
     #expect(pieces.contains("終わってから"))
     #expect(Tiles.isRight(pieces, answer: "テストが終わってからコミットしてください。", spaced: false))
     #expect(Segmenter.pieces("念のため", language: "ja") == nil)
+    #expect(Segmenter.pieces("何名様", language: "ja") == nil)
+    #expect(Segmenter.pieces("お会計をお願いします", language: "ja")?.count ?? 0 >= 2)
     let zh = Segmenter.pieces("先别急着提交，等测试跑完再说", language: "zh")!
     #expect(zh.count <= Segmenter.most)
     #expect(Tiles.isRight(zh, answer: "先别急着提交，等测试跑完再说", spaced: false))
