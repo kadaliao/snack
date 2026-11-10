@@ -37,9 +37,12 @@ public enum Answer {
         n <= 3 ? 0 : n <= 7 ? 1 : 2
     }
 
-    /// The words of a sentence as they are compared.
+    /// The words of a sentence as they are compared. A hyphen counts as a space:
+    /// "heads-up" is "heads up".
     public static func words(_ s: String) -> [String] {
         expand(straighten(s.lowercased()))
+            .replacingOccurrences(of: "-", with: " ")
+            .replacingOccurrences(of: "\u{2010}", with: " ")
             .split(whereSeparator: \.isWhitespace)
             .map { $0.trimmingCharacters(in: .punctuationCharacters) }
             .filter { !$0.isEmpty }

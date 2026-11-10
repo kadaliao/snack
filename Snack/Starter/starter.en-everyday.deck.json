@@ -1,0 +1,344 @@
+{
+  "format": "deck/1",
+  "deck": {
+    "id": "starter.en-everyday",
+    "title": "英语 · 地道口语",
+    "source": "snack",
+    "lang": {
+      "target": "en",
+      "native": "zh"
+    },
+    "description": "日常口语的地道说法，和几句常见中式英语的改法",
+    "updatedAt": "2026-11-10T00:00:00.000Z"
+  },
+  "cards": [
+    {
+      "id": "while-youre-at-it",
+      "kind": "phrase",
+      "front": "你顺便也…",
+      "back": "while you're at it",
+      "example": "Going to the store? Grab some milk while you're at it.",
+      "addedAt": "2026-11-10T00:00:00.000Z"
+    },
+    {
+      "id": "fair-enough",
+      "kind": "phrase",
+      "front": "说得也是",
+      "back": "fair enough",
+      "example": "Fair enough — we can wait until Monday.",
+      "addedAt": "2026-11-10T00:00:01.000Z"
+    },
+    {
+      "id": "up-to-you",
+      "kind": "phrase",
+      "front": "随你，你来定",
+      "back": "up to you",
+      "example": "Pizza or sushi? It's up to you.",
+      "addedAt": "2026-11-10T00:00:02.000Z"
+    },
+    {
+      "id": "heading-out",
+      "kind": "phrase",
+      "front": "我先走了",
+      "back": "I'm heading out",
+      "example": "I'm heading out — see you tomorrow!",
+      "addedAt": "2026-11-10T00:00:03.000Z"
+    },
+    {
+      "id": "anytime",
+      "kind": "phrase",
+      "front": "不客气，随时找我",
+      "back": "anytime",
+      "example": "Anytime — that's what friends are for.",
+      "addedAt": "2026-11-10T00:00:04.000Z"
+    },
+    {
+      "id": "its-on-me",
+      "kind": "phrase",
+      "front": "这顿我请",
+      "back": "it's on me",
+      "example": "Put your wallet away — it's on me.",
+      "addedAt": "2026-11-10T00:00:05.000Z"
+    },
+    {
+      "id": "just-looking",
+      "kind": "phrase",
+      "front": "我就随便看看",
+      "back": "I'm just looking",
+      "example": "No thanks, I'm just looking.",
+      "addedAt": "2026-11-10T00:00:06.000Z"
+    },
+    {
+      "id": "sleep-on-it",
+      "kind": "phrase",
+      "front": "让我考虑一晚",
+      "back": "let me sleep on it",
+      "example": "It's a great offer, but let me sleep on it.",
+      "addedAt": "2026-11-10T00:00:07.000Z"
+    },
+    {
+      "id": "play-it-by-ear",
+      "kind": "phrase",
+      "front": "到时候看情况",
+      "back": "play it by ear",
+      "example": "Let's not plan too much — we'll just play it by ear.",
+      "addedAt": "2026-11-10T00:00:08.000Z"
+    },
+    {
+      "id": "is-this-seat-taken",
+      "kind": "phrase",
+      "front": "这儿有人坐吗？",
+      "back": "is this seat taken",
+      "example": "Excuse me, is this seat taken?",
+      "addedAt": "2026-11-10T00:00:09.000Z"
+    },
+    {
+      "id": "im-good",
+      "kind": "phrase",
+      "front": "不用了，谢谢",
+      "back": "I'm good",
+      "example": "Oh, I'm good, thanks — I just ate.",
+      "addedAt": "2026-11-10T00:00:10.000Z"
+    },
+    {
+      "id": "you-read-my-mind",
+      "kind": "phrase",
+      "front": "正合我意",
+      "back": "you read my mind",
+      "example": "Ice cream? You read my mind.",
+      "addedAt": "2026-11-10T00:00:11.000Z"
+    },
+    {
+      "id": "no-rush",
+      "kind": "phrase",
+      "front": "不急，慢慢来",
+      "back": "no rush",
+      "example": "No rush — send it whenever you're ready.",
+      "addedAt": "2026-11-10T00:00:12.000Z"
+    },
+    {
+      "id": "get-back-to-you",
+      "kind": "phrase",
+      "front": "我回头答复你",
+      "back": "I'll get back to you",
+      "example": "Let me check my calendar and I'll get back to you.",
+      "addedAt": "2026-11-10T00:00:13.000Z"
+    },
+    {
+      "id": "be-right-there",
+      "kind": "phrase",
+      "front": "马上就来",
+      "back": "I'll be right there",
+      "example": "Just parking now — I'll be right there.",
+      "addedAt": "2026-11-10T00:00:14.000Z"
+    },
+    {
+      "id": "give-me-a-sec",
+      "kind": "phrase",
+      "front": "等我一下",
+      "back": "give me a sec",
+      "example": "Give me a sec, I just need to find my keys.",
+      "addedAt": "2026-11-10T00:00:15.000Z"
+    },
+    {
+      "id": "dont-ask",
+      "kind": "phrase",
+      "front": "别提了",
+      "back": "don't ask",
+      "example": "Don't ask — we were stuck on the runway for three hours.",
+      "addedAt": "2026-11-10T00:00:16.000Z"
+    },
+    {
+      "id": "not-what-i-meant",
+      "kind": "phrase",
+      "front": "我不是那个意思",
+      "back": "that's not what I meant",
+      "example": "Wait, that's not what I meant at all.",
+      "addedAt": "2026-11-10T00:00:17.000Z"
+    },
+    {
+      "id": "then-again",
+      "kind": "phrase",
+      "front": "话说回来",
+      "back": "then again",
+      "example": "It's pricey. Then again, it'll last for years.",
+      "addedAt": "2026-11-10T00:00:18.000Z"
+    },
+    {
+      "id": "call-it-a-day",
+      "kind": "phrase",
+      "front": "今天就到这吧",
+      "back": "let's call it a day",
+      "example": "It's almost eight — let's call it a day.",
+      "addedAt": "2026-11-10T00:00:19.000Z"
+    },
+    {
+      "id": "stuffed",
+      "kind": "phrase",
+      "front": "我吃撑了",
+      "back": "I'm stuffed",
+      "example": "No dessert for me, thanks — I'm stuffed.",
+      "addedAt": "2026-11-10T00:00:20.000Z"
+    },
+    {
+      "id": "no-way",
+      "kind": "phrase",
+      "front": "不会吧！",
+      "back": "no way",
+      "example": "No way — you're moving to Paris?",
+      "addedAt": "2026-11-10T00:00:21.000Z"
+    },
+    {
+      "id": "heads-up",
+      "kind": "phrase",
+      "front": "先跟你说一声",
+      "back": "just a heads-up",
+      "example": "Just a heads-up: the meeting moved to three.",
+      "addedAt": "2026-11-10T00:00:22.000Z"
+    },
+    {
+      "id": "let-you-go",
+      "kind": "phrase",
+      "front": "不耽误你了",
+      "back": "I'll let you go",
+      "example": "Anyway, I'll let you go — talk soon!",
+      "addedAt": "2026-11-10T00:00:23.000Z"
+    },
+    {
+      "id": "got-a-minute",
+      "kind": "phrase",
+      "front": "现在方便吗？",
+      "back": "got a minute",
+      "example": "Hey, got a minute? I want to run something by you.",
+      "addedAt": "2026-11-10T00:00:24.000Z"
+    },
+    {
+      "id": "help-yourself",
+      "kind": "phrase",
+      "front": "想吃什么自己拿",
+      "back": "help yourself",
+      "example": "There's pizza in the kitchen — help yourself.",
+      "addedAt": "2026-11-10T00:00:25.000Z"
+    },
+    {
+      "id": "after-you",
+      "kind": "phrase",
+      "front": "您先请",
+      "back": "after you",
+      "example": "Oh, sorry — after you.",
+      "addedAt": "2026-11-10T00:00:26.000Z"
+    },
+    {
+      "id": "dont-take-it-personally",
+      "kind": "phrase",
+      "front": "别往心里去",
+      "back": "don't take it personally",
+      "example": "He's like that with everyone, so don't take it personally.",
+      "addedAt": "2026-11-10T00:00:27.000Z"
+    },
+    {
+      "id": "something-came-up",
+      "kind": "phrase",
+      "front": "临时有事",
+      "back": "something came up",
+      "example": "Sorry, something came up and I have to cancel tonight.",
+      "addedAt": "2026-11-10T00:00:28.000Z"
+    },
+    {
+      "id": "cant-make-it",
+      "kind": "phrase",
+      "front": "我去不了了",
+      "back": "I can't make it",
+      "example": "I can't make it on Saturday, but have fun!",
+      "addedAt": "2026-11-10T00:00:29.000Z"
+    },
+    {
+      "id": "coming-down-with-a-cold",
+      "kind": "phrase",
+      "front": "快要感冒了",
+      "back": "coming down with a cold",
+      "example": "I think I'm coming down with a cold.",
+      "addedAt": "2026-11-10T00:00:30.000Z"
+    },
+    {
+      "id": "youve-got-this",
+      "kind": "phrase",
+      "front": "加油，你行的",
+      "back": "you've got this",
+      "example": "Big interview tomorrow? You've got this.",
+      "addedAt": "2026-11-10T00:00:31.000Z"
+    },
+    {
+      "id": "turn-on-the-light",
+      "kind": "fix",
+      "front": "open the light",
+      "back": "turn on the light",
+      "why": "开灯关灯用 turn on/off",
+      "example": "Can you turn on the light? It's getting dark.",
+      "addedAt": "2026-11-10T00:00:32.000Z"
+    },
+    {
+      "id": "really-like-it",
+      "kind": "fix",
+      "front": "I very like it",
+      "back": "I really like it",
+      "why": "very 不能修饰动词",
+      "example": "I really like it — where did you get it?",
+      "addedAt": "2026-11-10T00:00:33.000Z"
+    },
+    {
+      "id": "so-bored",
+      "kind": "fix",
+      "front": "I'm so boring",
+      "back": "I'm so bored",
+      "why": "boring 是让别人觉得无聊",
+      "example": "There's nothing to do here. I'm so bored.",
+      "addedAt": "2026-11-10T00:00:34.000Z"
+    },
+    {
+      "id": "what-do-you-think",
+      "kind": "fix",
+      "front": "how do you think",
+      "back": "what do you think",
+      "why": "问看法用 what",
+      "example": "I'm thinking of quitting. What do you think?",
+      "addedAt": "2026-11-10T00:00:35.000Z"
+    },
+    {
+      "id": "i-agree",
+      "kind": "fix",
+      "front": "I'm agree with you",
+      "back": "I agree with you",
+      "why": "agree 是动词，前面不加 am",
+      "example": "I agree with you — let's go with the cheaper one.",
+      "addedAt": "2026-11-10T00:00:36.000Z"
+    },
+    {
+      "id": "phone-is-dead",
+      "kind": "fix",
+      "front": "my phone has no electricity",
+      "back": "my phone is dead",
+      "why": "手机没电说 dead",
+      "example": "Can I borrow your charger? My phone is dead.",
+      "addedAt": "2026-11-10T00:00:37.000Z"
+    },
+    {
+      "id": "take-medicine",
+      "kind": "fix",
+      "front": "eat your medicine",
+      "back": "take your medicine",
+      "why": "吃药用 take",
+      "example": "Don't forget to take your medicine after dinner.",
+      "addedAt": "2026-11-10T00:00:38.000Z"
+    },
+    {
+      "id": "here-you-go",
+      "kind": "fix",
+      "front": "give you",
+      "back": "here you go",
+      "why": "递东西时说 here you go",
+      "example": "Here you go — one large latte.",
+      "addedAt": "2026-11-10T00:00:39.000Z"
+    }
+  ]
+}

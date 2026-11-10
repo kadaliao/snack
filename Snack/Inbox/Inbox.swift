@@ -40,6 +40,21 @@ final class Inbox {
     /// What the last import did, to tell the learner.
     var notice: String?
 
+    /// A deck that comes with the app, added with a tap. It joins the library
+    /// straight away, iCloud or not, as a producer file of its own.
+    struct Starter: Identifiable {
+        var name: String
+        var file: DeckFile
+        var id: String { name }
+    }
+
+    /// The decks that come with the app.
+    let starters: [Starter] = Inbox.loadStarters()
+    /// The ones added, by file name.
+    private(set) var addedStarters: Set<String> = Set(UserDefaults.standard.stringArray(forKey: "addedStarters") ?? [])
+    /// What the Inbox's files held when last read, to merge again with a starter added.
+    private var lastSources: [Library.Source] = []
+
     private let libraryURL: URL
     private var inboxURL: URL?
     private var query: NSMetadataQuery?
@@ -145,14 +160,8 @@ final class Inbox {
                     files[index].problem = problem.message
                 }
             }
-            var merged = library
-            let change = merged.merge(sources, now: .now)
-            if !change.repeated.isEmpty { onRepeated?(change.repeated) }
-            if merged != library {
-                library = merged
-                let url = libraryURL
-                await Task.detached { try? merged.save(to: url) }.value
-            }
+            lastSources = sources
+            await merge()
             lastMerged = .now
             isReading = false
             if isReadAgain {
@@ -160,6 +169,39 @@ final class Inbox {
                 refresh()
             }
         }
+    }
+
+    /// Merges the Inbox's files as last read and the starters added into the
+    /// library, and keeps it.
+    private func merge() async {
+        let starting = starters.filter { addedStarters.contains($0.name) }.map { Library.Source(name: $0.name, file: $0.file) }
+        var merged = library
+        let change = merged.merge(lastSources + starting, now: .now)
+        if !change.repeated.isEmpty { onRepeated?(change.repeated) }
+        guard merged != library else { return }
+        library = merged
+        let url = libraryURL
+        await Task.detached { try? merged.save(to: url) }.value
+    }
+
+    func isAdded(_ starter: Starter) -> Bool {
+        addedStarters.contains(starter.name) || library.decks[starter.file.deck.id] != nil
+    }
+
+    func add(_ starter: Starter) {
+        addedStarters.insert(starter.name)
+        UserDefaults.standard.set(addedStarters.sorted(), forKey: "addedStarters")
+        Task { await merge() }
+    }
+
+    nonisolated private static func loadStarters() -> [Starter] {
+        (Bundle.main.urls(forResourcesWithExtension: "json", subdirectory: nil) ?? [])
+            .filter { $0.lastPathComponent.hasPrefix("starter.") && $0.lastPathComponent.hasSuffix(".deck.json") }
+            .compactMap { url in
+                guard let data = try? Data(contentsOf: url), let file = try? DeckFile.read(data) else { return nil }
+                return Starter(name: url.lastPathComponent, file: file)
+            }
+            .sorted { $0.name < $1.name }
     }
 
     struct ReadProblem: Error {

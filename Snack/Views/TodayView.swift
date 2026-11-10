@@ -81,11 +81,14 @@ struct TodayView: View {
     private func start(entries: [Entry], outlook: Planner.Outlook, now: Date) -> some View {
         VStack(spacing: 12) {
             if entries.isEmpty {
-                ContentUnavailableView(
-                    "还没有卡片",
-                    systemImage: "tray",
-                    description: Text("在「牌组」里看看怎么把卡片放进来。")
-                )
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("先挑一套牌组").font(.title3.bold())
+                    Text("添加以后就能开始刷。以后也可以在「牌组」里导入别的牌组。")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    StarterList(inbox: inbox)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             } else if outlook.due + outlook.new > 0 {
                 Button { begin(entries) } label: {
                     VStack(spacing: 2) {

@@ -31,6 +31,7 @@ private let phrases = [
     #expect(Answer.check("While you are at it.", against: "while you're at it", spaced: true) == .exact)
     #expect(Answer.check("  sorted   OUT ", against: "sorted out", spaced: true) == .exact)
     #expect(Answer.check("I can't", against: "I cannot", spaced: true) == .exact)
+    #expect(Answer.check("just a heads up", against: "just a heads-up", spaced: true) == .exact)
     #expect(Answer.check("on both sieds", against: "on both sides", spaced: true) == .typo)
     #expect(Answer.check("follow up on thme", against: "follow up on them", spaced: true) == .typo)
     #expect(Answer.check("Hold off on comitting untill the tests finish", against: "Hold off on committing until the tests finish.", spaced: true) == .typo)

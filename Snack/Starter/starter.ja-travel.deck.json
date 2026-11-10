@@ -1,0 +1,393 @@
+{
+  "format": "deck/1",
+  "deck": {
+    "id": "starter.ja-travel",
+    "title": "日语 · 旅行入门",
+    "source": "snack",
+    "lang": {
+      "target": "ja",
+      "native": "zh"
+    },
+    "description": "第一次去日本用得上的日语：打招呼、道谢道歉、购物吃饭、问路坐车、住酒店、数东西",
+    "updatedAt": "2026-11-10T00:00:00.000Z"
+  },
+  "cards": [
+    {
+      "id": "sumimasen",
+      "kind": "phrase",
+      "front": "劳驾（叫人时）",
+      "back": "すみません",
+      "example": "すみません、注文いいですか。",
+      "addedAt": "2026-11-10T00:00:00.000Z"
+    },
+    {
+      "id": "arigatou-gozaimasu",
+      "kind": "phrase",
+      "front": "谢谢您",
+      "back": "ありがとうございます",
+      "example": "教えてくださって、ありがとうございます。",
+      "tiles": [
+        "ありがとう",
+        "ございます"
+      ],
+      "addedAt": "2026-11-10T00:00:01.000Z"
+    },
+    {
+      "id": "onegaishimasu",
+      "kind": "phrase",
+      "front": "麻烦您（请求时）",
+      "back": "お願いします",
+      "reading": "おねがいします",
+      "example": "これ、お願いします。",
+      "addedAt": "2026-11-10T00:00:02.000Z"
+    },
+    {
+      "id": "daijoubu-desu",
+      "kind": "phrase",
+      "front": "不用了（婉拒）",
+      "back": "大丈夫です",
+      "reading": "だいじょうぶです",
+      "example": "袋は大丈夫です。",
+      "addedAt": "2026-11-10T00:00:03.000Z"
+    },
+    {
+      "id": "gomennasai",
+      "kind": "phrase",
+      "front": "对不起（道歉）",
+      "back": "ごめんなさい",
+      "example": "ごめんなさい、席を間違えました。",
+      "addedAt": "2026-11-10T00:00:04.000Z"
+    },
+    {
+      "id": "ohayou-gozaimasu",
+      "kind": "qa",
+      "front": "早上在酒店碰到工作人员，怎么打招呼？",
+      "back": "おはようございます",
+      "distractors": [
+        "こんばんは",
+        "おやすみなさい",
+        "いってきます"
+      ],
+      "addedAt": "2026-11-10T00:00:05.000Z"
+    },
+    {
+      "id": "otearai-wa-doko",
+      "kind": "pattern",
+      "front": "请问洗手间在哪里？",
+      "back": "すみません、お手洗いはどこですか。",
+      "reading": "すみません、おてあらいはどこですか",
+      "pattern": "___はどこですか",
+      "tiles": [
+        "すみません、",
+        "お手洗いは",
+        "どこですか。"
+      ],
+      "addedAt": "2026-11-10T00:00:06.000Z"
+    },
+    {
+      "id": "kore-wo-futatsu",
+      "kind": "pattern",
+      "front": "这个请给我两个",
+      "back": "これを二つください。",
+      "reading": "これをふたつください",
+      "pattern": "___を___ください",
+      "tiles": [
+        "これを",
+        "二つ",
+        "ください。"
+      ],
+      "addedAt": "2026-11-10T00:00:07.000Z"
+    },
+    {
+      "id": "kore-zenbu-de",
+      "kind": "pattern",
+      "front": "这些一共多少钱？",
+      "back": "これ全部でいくらですか。",
+      "reading": "これぜんぶでいくらですか",
+      "pattern": "___でいくらですか",
+      "tiles": [
+        "これ",
+        "全部で",
+        "いくらですか。"
+      ],
+      "addedAt": "2026-11-10T00:00:08.000Z"
+    },
+    {
+      "id": "kaado-de-haraemasu",
+      "kind": "pattern",
+      "front": "可以刷卡吗？",
+      "back": "カードで払えますか。",
+      "reading": "カードではらえますか",
+      "pattern": "___で払えますか",
+      "tiles": [
+        "カードで",
+        "払えますか。"
+      ],
+      "addedAt": "2026-11-10T00:00:09.000Z"
+    },
+    {
+      "id": "okaikei",
+      "kind": "phrase",
+      "front": "买单",
+      "back": "お会計",
+      "reading": "おかいけい",
+      "example": "すみません、お会計お願いします。",
+      "addedAt": "2026-11-10T00:00:10.000Z"
+    },
+    {
+      "id": "betsubetsu-de",
+      "kind": "phrase",
+      "front": "分开付",
+      "back": "別々で",
+      "reading": "べつべつで",
+      "example": "お会計は別々でお願いします。",
+      "addedAt": "2026-11-10T00:00:11.000Z"
+    },
+    {
+      "id": "futari-desu",
+      "kind": "qa",
+      "front": "店员问「何名様ですか」，你们两个人怎么回答？",
+      "back": "二人です",
+      "reading": "ふたりです",
+      "distractors": [
+        "二つです",
+        "二名様です",
+        "二本です"
+      ],
+      "addedAt": "2026-11-10T00:00:12.000Z"
+    },
+    {
+      "id": "osusume",
+      "kind": "phrase",
+      "front": "推荐（的菜）",
+      "back": "おすすめ",
+      "example": "おすすめは何ですか。",
+      "addedAt": "2026-11-10T00:00:13.000Z"
+    },
+    {
+      "id": "chuugokugo-menyuu",
+      "kind": "pattern",
+      "front": "有中文菜单吗？",
+      "back": "中国語のメニューはありますか。",
+      "reading": "ちゅうごくごのメニューはありますか",
+      "pattern": "___はありますか",
+      "tiles": [
+        "中国語の",
+        "メニューは",
+        "ありますか。"
+      ],
+      "addedAt": "2026-11-10T00:00:14.000Z"
+    },
+    {
+      "id": "mou-ippai",
+      "kind": "phrase",
+      "front": "再来一杯",
+      "back": "もう一杯",
+      "reading": "もういっぱい",
+      "example": "ビールをもう一杯ください。",
+      "addedAt": "2026-11-10T00:00:15.000Z"
+    },
+    {
+      "id": "mochikaeri",
+      "kind": "phrase",
+      "front": "外带",
+      "back": "持ち帰り",
+      "reading": "もちかえり",
+      "example": "これ、持ち帰りできますか。",
+      "addedAt": "2026-11-10T00:00:16.000Z"
+    },
+    {
+      "id": "gochisousama",
+      "kind": "qa",
+      "front": "吃完离店时对店员说什么？",
+      "back": "ごちそうさまでした",
+      "distractors": [
+        "いただきます",
+        "おつかれさまでした",
+        "おじゃましました"
+      ],
+      "addedAt": "2026-11-10T00:00:17.000Z"
+    },
+    {
+      "id": "shichaku",
+      "kind": "phrase",
+      "front": "试穿",
+      "back": "試着",
+      "reading": "しちゃく",
+      "example": "これ、試着できますか。",
+      "addedAt": "2026-11-10T00:00:18.000Z"
+    },
+    {
+      "id": "shashin-tottemo-ii",
+      "kind": "pattern",
+      "front": "这里可以拍照吗？",
+      "back": "ここで写真を撮ってもいいですか。",
+      "reading": "ここでしゃしんをとってもいいですか",
+      "pattern": "___てもいいですか",
+      "tiles": [
+        "ここで",
+        "写真を",
+        "撮っても",
+        "いいですか。"
+      ],
+      "addedAt": "2026-11-10T00:00:19.000Z"
+    },
+    {
+      "id": "yukkuri",
+      "kind": "phrase",
+      "front": "慢一点（说话）",
+      "back": "ゆっくり",
+      "example": "もう少しゆっくり話してもらえますか。",
+      "addedAt": "2026-11-10T00:00:20.000Z"
+    },
+    {
+      "id": "mou-ichido",
+      "kind": "phrase",
+      "front": "请再说一遍",
+      "back": "もう一度お願いします",
+      "reading": "もういちどおねがいします",
+      "example": "すみません、もう一度お願いします。",
+      "tiles": [
+        "もう一度",
+        "お願いします"
+      ],
+      "addedAt": "2026-11-10T00:00:21.000Z"
+    },
+    {
+      "id": "nihongo-amari",
+      "kind": "pattern",
+      "front": "我不太会说日语",
+      "back": "日本語はあまり話せません。",
+      "reading": "にほんごはあまりはなせません",
+      "pattern": "___はあまり話せません",
+      "tiles": [
+        "日本語は",
+        "あまり",
+        "話せません。"
+      ],
+      "addedAt": "2026-11-10T00:00:22.000Z"
+    },
+    {
+      "id": "chikaku",
+      "kind": "phrase",
+      "front": "附近",
+      "back": "近く",
+      "reading": "ちかく",
+      "example": "この近くにコンビニはありますか。",
+      "addedAt": "2026-11-10T00:00:23.000Z"
+    },
+    {
+      "id": "massugu",
+      "kind": "phrase",
+      "front": "一直往前",
+      "back": "まっすぐ",
+      "example": "この道をまっすぐ行ってください。",
+      "addedAt": "2026-11-10T00:00:24.000Z"
+    },
+    {
+      "id": "kippu",
+      "kind": "phrase",
+      "front": "车票（电车）",
+      "back": "切符",
+      "reading": "きっぷ",
+      "example": "切符はどこで買えますか。",
+      "addedAt": "2026-11-10T00:00:25.000Z"
+    },
+    {
+      "id": "nimai",
+      "kind": "phrase",
+      "front": "两张（票）",
+      "back": "二枚",
+      "reading": "にまい",
+      "example": "大人二枚お願いします。",
+      "addedAt": "2026-11-10T00:00:26.000Z"
+    },
+    {
+      "id": "nanbansen",
+      "kind": "phrase",
+      "front": "几号站台",
+      "back": "何番線",
+      "reading": "なんばんせん",
+      "example": "京都行きは何番線ですか。",
+      "addedAt": "2026-11-10T00:00:27.000Z"
+    },
+    {
+      "id": "norikae",
+      "kind": "phrase",
+      "front": "换乘",
+      "back": "乗り換え",
+      "reading": "のりかえ",
+      "example": "空港まで乗り換えはありますか。",
+      "addedAt": "2026-11-10T00:00:28.000Z"
+    },
+    {
+      "id": "kono-densha-wa",
+      "kind": "pattern",
+      "front": "这趟电车去新宿吗？",
+      "back": "この電車は新宿に行きますか。",
+      "reading": "このでんしゃはしんじゅくにいきますか",
+      "pattern": "この電車は___に行きますか",
+      "tiles": [
+        "この",
+        "電車は",
+        "新宿に",
+        "行きますか。"
+      ],
+      "addedAt": "2026-11-10T00:00:29.000Z"
+    },
+    {
+      "id": "juusho-made",
+      "kind": "pattern",
+      "front": "（打车）请送我到这个地址",
+      "back": "この住所までお願いします。",
+      "reading": "このじゅうしょまでおねがいします",
+      "pattern": "___までお願いします",
+      "tiles": [
+        "この",
+        "住所まで",
+        "お願いします。"
+      ],
+      "addedAt": "2026-11-10T00:00:30.000Z"
+    },
+    {
+      "id": "chekkuin",
+      "kind": "phrase",
+      "front": "办理入住",
+      "back": "チェックイン",
+      "example": "チェックインは何時からですか。",
+      "addedAt": "2026-11-10T00:00:31.000Z"
+    },
+    {
+      "id": "ippaku",
+      "kind": "phrase",
+      "front": "一晚（住宿）",
+      "back": "一泊",
+      "reading": "いっぱく",
+      "example": "一泊いくらですか。",
+      "addedAt": "2026-11-10T00:00:32.000Z"
+    },
+    {
+      "id": "choushoku",
+      "kind": "phrase",
+      "front": "早餐（酒店）",
+      "back": "朝食",
+      "reading": "ちょうしょく",
+      "example": "朝食は付いていますか。",
+      "addedAt": "2026-11-10T00:00:33.000Z"
+    },
+    {
+      "id": "nimotsu-azukatte",
+      "kind": "pattern",
+      "front": "可以帮我寄存一下行李吗？",
+      "back": "荷物を預かってもらえますか。",
+      "reading": "にもつをあずかってもらえますか",
+      "pattern": "___を預かってもらえますか",
+      "tiles": [
+        "荷物を",
+        "預かって",
+        "もらえますか。"
+      ],
+      "addedAt": "2026-11-10T00:00:34.000Z"
+    }
+  ]
+}

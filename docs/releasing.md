@@ -4,6 +4,8 @@
 
 ## 第一次之前
 
+这些都已经做过了（2026-11-10），App 记录叫「卡片零食」，App ID `6832964830`。要重做时照下面来。
+
 1. **App 记录**：只能在网页上建（API 做不到）。[App Store Connect](https://appstoreconnect.apple.com/apps) › 我的 App › ＋ › 新建 App：
 
    | 字段 | 填写 |
@@ -16,12 +18,19 @@
 
    建好以后脚本按套装 ID 找它，不用记 App ID。
 
-2. **测试信息**：给外部测试员的构建要先过 TestFlight 审核，审核要这些信息，在 App Store Connect › TestFlight › 测试信息 里填一次：Beta 版描述、反馈邮箱、审核联系人（姓名、电话、邮箱）。不用演示账号。
+2. **测试信息**：给外部测试员的构建要先过 TestFlight 审核，审核要这些信息：Beta 版描述、反馈邮箱、审核联系人（姓名、电话、邮箱）。不用演示账号。可以在 App Store Connect › TestFlight › 测试信息 里填，也可以用 API 写 `betaAppLocalizations` 和 `betaAppReviewDetails`（第一次是从开心果的设置复制的）。
+
+   内部测试组「内部测试」（能看到所有构建，不用审核）也已经建好，维护者在里面。
 
 3. **CloudKit 的正式环境**：开发版（`scripts/device.sh` 装的）用 CloudKit 的开发环境，TestFlight 和 App Store 版用正式环境。正式环境的结构要从开发环境部署过去，不然 TestFlight 版的复习记录同步不了：
 
-   1. 先用 `scripts/device.sh` 装一次，在手机上刷完一节，让开发环境里有 `CD_ReviewRecord` 和 `CD_LessonRecord` 两种记录。
-   2. [CloudKit Console](https://icloud.developer.apple.com/dashboard) › iCloud.com.kadaliao.snack › Schema › Deploy Schema Changes。
+   1. 让开发环境里有 `CD_ReviewRecord` 和 `CD_LessonRecord` 两种记录：用 `scripts/device.sh` 装到手机上，再带参数打开一次，它会把记录类型推上去（输出 `CloudKit schema: initialized`）：
+
+      ```sh
+      xcrun devicectl device process launch --console --device <udid> com.kadaliao.snack -- -SnackInitCloudKitSchema YES
+      ```
+
+   2. [CloudKit Console](https://icloud.developer.apple.com/dashboard) › iCloud.com.kadaliao.snack › Deploy Schema Changes。
 
    以后 `ReviewRecord`、`LessonRecord` 加了字段，都要再部署一次。正式环境的字段只能加、不能删，所以改模型时只加带默认值的字段。
 

@@ -1,0 +1,296 @@
+{
+  "format": "deck/1",
+  "deck": {
+    "id": "starter.en-work",
+    "title": "英语 · 职场沟通",
+    "source": "snack",
+    "lang": {
+      "target": "en",
+      "native": "zh"
+    },
+    "description": "开会、发消息、写邮件和代码评审时，同事们真会说的英语",
+    "updatedAt": "2026-11-10T00:00:00.000Z"
+  },
+  "cards": [
+    {
+      "id": "follow-up-on",
+      "kind": "phrase",
+      "front": "跟进一下",
+      "back": "follow up on",
+      "example": "I'll follow up on this with the design team.",
+      "addedAt": "2026-11-10T00:00:00.000Z"
+    },
+    {
+      "id": "same-page",
+      "kind": "phrase",
+      "front": "对齐一下",
+      "back": "get on the same page",
+      "example": "Let's hop on a quick call to get on the same page.",
+      "addedAt": "2026-11-10T00:00:01.000Z"
+    },
+    {
+      "id": "leave-it-there",
+      "kind": "phrase",
+      "front": "先这样",
+      "back": "let's leave it there",
+      "example": "We're almost out of time, so let's leave it there.",
+      "addedAt": "2026-11-10T00:00:02.000Z"
+    },
+    {
+      "id": "take-this-offline",
+      "kind": "phrase",
+      "front": "会后单独聊",
+      "back": "take this offline",
+      "example": "Let's take this offline so we don't hold everyone up.",
+      "addedAt": "2026-11-10T00:00:03.000Z"
+    },
+    {
+      "id": "hard-stop",
+      "kind": "phrase",
+      "front": "到点必须走",
+      "back": "hard stop",
+      "example": "I have a hard stop at three, so let's keep it quick.",
+      "addedAt": "2026-11-10T00:00:04.000Z"
+    },
+    {
+      "id": "on-mute",
+      "kind": "phrase",
+      "front": "你静音了",
+      "back": "you're on mute",
+      "example": "Sorry, Mark, I think you're on mute.",
+      "addedAt": "2026-11-10T00:00:05.000Z"
+    },
+    {
+      "id": "action-items",
+      "kind": "phrase",
+      "front": "会后待办事项",
+      "back": "action items",
+      "example": "I'll send out the action items after the call.",
+      "addedAt": "2026-11-10T00:00:06.000Z"
+    },
+    {
+      "id": "keep-you-posted",
+      "kind": "phrase",
+      "front": "随时同步进展",
+      "back": "keep you posted",
+      "example": "I'll keep you posted on the rollout.",
+      "addedAt": "2026-11-10T00:00:07.000Z"
+    },
+    {
+      "id": "loop-me-in",
+      "kind": "phrase",
+      "front": "把我也拉进来",
+      "back": "loop me in",
+      "example": "Please loop me in when you email the client.",
+      "addedAt": "2026-11-10T00:00:08.000Z"
+    },
+    {
+      "id": "when-you-get-a-chance",
+      "kind": "phrase",
+      "front": "你方便的时候",
+      "back": "when you get a chance",
+      "example": "Can you send me the slides when you get a chance?",
+      "addedAt": "2026-11-10T00:00:09.000Z"
+    },
+    {
+      "id": "get-back-to-you",
+      "kind": "phrase",
+      "front": "回头答复你",
+      "back": "get back to you",
+      "example": "Let me check with the team and get back to you.",
+      "addedAt": "2026-11-10T00:00:10.000Z"
+    },
+    {
+      "id": "thanks-in-advance",
+      "kind": "phrase",
+      "front": "先谢谢了",
+      "back": "thanks in advance",
+      "example": "Thanks in advance for taking a look!",
+      "addedAt": "2026-11-10T00:00:11.000Z"
+    },
+    {
+      "id": "by-end-of-day",
+      "kind": "phrase",
+      "front": "今天下班前",
+      "back": "by end of day",
+      "example": "I'll have the draft ready by end of day.",
+      "addedAt": "2026-11-10T00:00:12.000Z"
+    },
+    {
+      "id": "on-track",
+      "kind": "phrase",
+      "front": "进度正常",
+      "back": "on track",
+      "example": "The migration is still on track for Friday.",
+      "addedAt": "2026-11-10T00:00:13.000Z"
+    },
+    {
+      "id": "address-the-comments",
+      "kind": "phrase",
+      "front": "处理评审意见",
+      "back": "address the comments",
+      "example": "Thanks for the review. I'll address the comments today.",
+      "addedAt": "2026-11-10T00:00:14.000Z"
+    },
+    {
+      "id": "good-catch",
+      "kind": "phrase",
+      "front": "这都被你发现了",
+      "back": "good catch",
+      "example": "Good catch! I'll fix that before merging.",
+      "addedAt": "2026-11-10T00:00:15.000Z"
+    },
+    {
+      "id": "push-back-on",
+      "kind": "phrase",
+      "front": "对…提出异议",
+      "back": "push back on",
+      "example": "I'd push back on adding another dependency here.",
+      "addedAt": "2026-11-10T00:00:16.000Z"
+    },
+    {
+      "id": "sanity-check",
+      "kind": "phrase",
+      "front": "查查有没有低级错误",
+      "back": "sanity check",
+      "example": "Could you do a quick sanity check on my query?",
+      "addedAt": "2026-11-10T00:00:17.000Z"
+    },
+    {
+      "id": "for-context",
+      "kind": "phrase",
+      "front": "补充一下背景",
+      "back": "for context",
+      "example": "For context, this endpoint gets called on every page load.",
+      "addedAt": "2026-11-10T00:00:18.000Z"
+    },
+    {
+      "id": "on-my-radar",
+      "kind": "phrase",
+      "front": "这事我记着呢",
+      "back": "on my radar",
+      "example": "Thanks, that bug is already on my radar.",
+      "addedAt": "2026-11-10T00:00:19.000Z"
+    },
+    {
+      "id": "hold-off-until",
+      "kind": "pattern",
+      "front": "先别急着提交，等测试跑完再说",
+      "back": "Hold off on committing until the tests finish.",
+      "pattern": "Hold off on ___ until ___.",
+      "addedAt": "2026-11-10T00:00:20.000Z"
+    },
+    {
+      "id": "is-there-a-reason",
+      "kind": "pattern",
+      "front": "这里为什么不用缓存？是有什么考虑吗？",
+      "back": "Is there a reason we're not using the cache here?",
+      "pattern": "Is there a reason we're not ___?",
+      "addedAt": "2026-11-10T00:00:21.000Z"
+    },
+    {
+      "id": "not-a-blocker",
+      "kind": "pattern",
+      "front": "不影响合并，不过这个函数可以拆一下",
+      "back": "Not a blocker, but this function could be split up.",
+      "pattern": "Not a blocker, but ___.",
+      "addedAt": "2026-11-10T00:00:22.000Z"
+    },
+    {
+      "id": "take-a-look-no-rush",
+      "kind": "pattern",
+      "front": "能帮我看下这个 PR 吗？不急",
+      "back": "Could you take a look at this PR? No rush.",
+      "pattern": "Could you take a look at ___? No rush.",
+      "addedAt": "2026-11-10T00:00:23.000Z"
+    },
+    {
+      "id": "when-you-say",
+      "kind": "pattern",
+      "front": "你说的“做完了”，是指已经上线了吗？",
+      "back": "When you say “done,” do you mean deployed?",
+      "pattern": "When you say ___, do you mean ___?",
+      "addedAt": "2026-11-10T00:00:24.000Z"
+    },
+    {
+      "id": "to-add-to",
+      "kind": "pattern",
+      "front": "补充一下 Lisa 刚才说的，我们还需要一个回滚方案",
+      "back": "To add to what Lisa said, we also need a rollback plan.",
+      "pattern": "To add to what ___ said, ___.",
+      "addedAt": "2026-11-10T00:00:25.000Z"
+    },
+    {
+      "id": "see-your-point",
+      "kind": "pattern",
+      "front": "我明白你的意思，但我还是担心时间来不及",
+      "back": "I see your point, but I'm still worried about the timeline.",
+      "pattern": "I see your point, but I'm still worried about ___.",
+      "addedAt": "2026-11-10T00:00:26.000Z"
+    },
+    {
+      "id": "you-cut-out",
+      "kind": "pattern",
+      "front": "不好意思，你刚才卡了，能再说一下最后那部分吗？",
+      "back": "Sorry, you cut out. Could you repeat the last part?",
+      "pattern": "Sorry, you cut out. Could you repeat ___?",
+      "addedAt": "2026-11-10T00:00:27.000Z"
+    },
+    {
+      "id": "does-it-work-for",
+      "kind": "pattern",
+      "front": "周四下午大家都方便吗？",
+      "back": "Does Thursday afternoon work for everyone?",
+      "pattern": "Does ___ work for ___?",
+      "addedAt": "2026-11-10T00:00:28.000Z"
+    },
+    {
+      "id": "push-to",
+      "kind": "pattern",
+      "front": "演示能不能推到下周？",
+      "back": "Can we push the demo to next week?",
+      "pattern": "Can we push ___ to ___?",
+      "addedAt": "2026-11-10T00:00:29.000Z"
+    },
+    {
+      "id": "off-your-plate",
+      "kind": "pattern",
+      "front": "发版说明交给我吧，你就不用管了",
+      "back": "I can take the release notes off your plate.",
+      "pattern": "I can take ___ off your plate.",
+      "addedAt": "2026-11-10T00:00:30.000Z"
+    },
+    {
+      "id": "just-to-confirm",
+      "kind": "pattern",
+      "front": "确认一下，这个周五截止，对吧？",
+      "back": "Just to confirm, this is due Friday, right?",
+      "pattern": "Just to confirm, ___, right?",
+      "addedAt": "2026-11-10T00:00:31.000Z"
+    },
+    {
+      "id": "attached-for-review",
+      "kind": "pattern",
+      "front": "附件是修改后的方案，请过目",
+      "back": "I've attached the revised proposal for your review.",
+      "pattern": "I've attached ___ for your review.",
+      "addedAt": "2026-11-10T00:00:32.000Z"
+    },
+    {
+      "id": "let-me-know-if",
+      "kind": "pattern",
+      "front": "有什么问题随时跟我说",
+      "back": "Let me know if you have any questions.",
+      "pattern": "Let me know if ___.",
+      "addedAt": "2026-11-10T00:00:33.000Z"
+    },
+    {
+      "id": "what-if-we",
+      "kind": "pattern",
+      "front": "要不我们先上一个简化版？",
+      "back": "What if we ship a simpler version first?",
+      "pattern": "What if we ___ first?",
+      "addedAt": "2026-11-10T00:00:34.000Z"
+    }
+  ]
+}

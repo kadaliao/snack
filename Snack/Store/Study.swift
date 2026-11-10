@@ -96,6 +96,11 @@ final class Study {
     @ObservationIgnored private var reloading: Task<Void, Never>?
 
     init(inMemory: Bool = false) {
+        #if DEBUG
+        // `-SnackInitCloudKitSchema YES`: puts the record types in CloudKit's
+        // development environment, to deploy to production from the console.
+        if UserDefaults.standard.bool(forKey: "SnackInitCloudKitSchema") { Self.initializeCloudKitSchema() }
+        #endif
         do {
             let config = ModelConfiguration(
                 "Progress", isStoredInMemoryOnly: inMemory,
@@ -111,6 +116,38 @@ final class Study {
     }
 
     private var context: ModelContext? { container?.mainContext }
+
+    #if DEBUG
+    /// Core Data's way, on a store of its own in Caches: SwiftData has none.
+    private static func initializeCloudKitSchema() {
+        let url = URL.cachesDirectory.appending(path: "schema-\(UUID().uuidString).store")
+        let description = NSPersistentStoreDescription(url: url)
+        description.cloudKitContainerOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: Inbox.containerID)
+        description.shouldAddStoreAsynchronously = false
+        guard let model = NSManagedObjectModel.makeManagedObjectModel(for: [ReviewRecord.self, LessonRecord.self]) else {
+            print("CloudKit schema: no model")
+            return
+        }
+        let container = NSPersistentCloudKitContainer(name: "Schema", managedObjectModel: model)
+        container.persistentStoreDescriptions = [description]
+        var failure: Error?
+        container.loadPersistentStores { _, error in failure = error }
+        if let failure {
+            print("CloudKit schema: store failed: \(failure)")
+            return
+        }
+        do {
+            try container.initializeCloudKitSchema()
+            print("CloudKit schema: initialized")
+        } catch {
+            print("CloudKit schema: failed: \(error)")
+        }
+        for store in container.persistentStoreCoordinator.persistentStores {
+            try? container.persistentStoreCoordinator.remove(store)
+        }
+        try? FileManager.default.removeItem(at: url)
+    }
+    #endif
 
     private func load() {
         guard let context else { return }

@@ -16,7 +16,7 @@ struct DecksView: View {
                         ContentUnavailableView(
                             "还没有牌组",
                             systemImage: "tray",
-                            description: Text("把 .deck.json 文件放进 iCloud 云盘的 Snack › Inbox 文件夹，或者点右上角的 + 导入，这里就会出现。")
+                            description: Text("先在下面添加一套入门牌组；也可以点右上角的 + 导入 .deck.json，或者把它放进 iCloud 云盘的 Snack › Inbox 文件夹。")
                         )
                     }
                 } else {
@@ -28,6 +28,15 @@ struct DecksView: View {
                                 DeckRow(deck: deck, study: study)
                             }
                         }
+                    }
+                }
+                if !inbox.starters.isEmpty {
+                    Section {
+                        StarterList(inbox: inbox)
+                    } header: {
+                        Text("入门牌组")
+                    } footer: {
+                        Text("随 app 带来的几套牌组，添加以后新卡会混进每天的复习。")
                     }
                 }
                 Section {

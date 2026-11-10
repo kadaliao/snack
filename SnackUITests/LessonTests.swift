@@ -135,3 +135,22 @@ final class WidgetTests: XCTestCase {
         }
     }
 }
+
+/// A deck that comes with the app is added with a tap.
+final class StarterTests: XCTestCase {
+    @MainActor func testAStarterDeckIsAddedWithATap() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-SnackInMemory", "YES", "-addedStarters", "()", "-AppleLanguages", "(zh-Hans)"]
+        app.launch()
+        app.tabBars.buttons["牌组"].tap()
+        let add = app.buttons["添加日语 · 旅行入门"]
+        XCTAssertTrue(add.waitForExistence(timeout: 10), "no starter deck to add")
+        add.tap()
+        XCTAssertTrue(app.staticTexts["日语 · 旅行入门"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["添加日语 · 旅行入门"].waitForExistence(timeout: 2))
+        let shot = app.screenshot()
+        if let folder = ProcessInfo.processInfo.environment["SNACK_SHOTS"] {
+            try? shot.pngRepresentation.write(to: URL(fileURLWithPath: folder).appendingPathComponent("starters.png"))
+        }
+    }
+}
