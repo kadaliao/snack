@@ -107,12 +107,19 @@ private func question(_ game: Game, back: String = "sorted out", tiles: Int = 2)
 
     var known = scheduler.review(nil, .easy, at: t0)
     known.stability = 60
-    for _ in 0..<5 {
-        #expect(Questions.make(card, memory: known, siblings: phrases, using: &rng).game == .type)
+    var games: [Game: Int] = [:]
+    for _ in 0..<40 {
+        let game = Questions.make(card, memory: known, siblings: phrases, using: &rng).game
+        #expect(game.level >= 2)
+        games[game, default: 0] += 1
     }
-    // Too long to type: put together from tiles.
+    // Mostly typed out; now and then heard or built.
+    #expect(games[.type, default: 0] > 20)
+    // Too long to type: put together from tiles, seen or heard.
     let sentence = entry("p", .pattern, back: "Hold off on committing until the tests finish.")
-    #expect(Questions.make(sentence, memory: known, siblings: phrases, using: &rng).game == .build)
+    for _ in 0..<5 {
+        #expect([.build, .listen].contains(Questions.make(sentence, memory: known, siblings: phrases, using: &rng).game))
+    }
     // A long answer with nothing to choose from or build: turned over.
     let qa = DeckInfo(id: "sd", title: "系统设计")
     let long = entry("q", .qa, front: "什么是 CAP？", back: "一致性、可用性、分区容错性，三者最多同时满足两个", deck: qa)
@@ -230,12 +237,14 @@ private func many(_ n: Int) -> [Entry] {
     #expect(run.current?.key == qs[0].key)
 
     let first = run.answer(.flipped(.good, seconds: 2))
-    #expect(first?.grade == .good)
-    #expect(run.answer(.flipped(.again, seconds: 2)) == nil)  // answered already
+    #expect(first.map(\.grade) == [.good])
+    #expect(first.map(\.xp) == [Score.answer])
+    #expect(run.answer(.flipped(.again, seconds: 2)).isEmpty)  // answered already
     run.advance()
 
     let wrong = run.answer(.flipped(.again, seconds: 2))
-    #expect(wrong?.grade == .again)
+    #expect(wrong.map(\.grade) == [.again])
+    #expect(wrong.map(\.xp) == [0])
     #expect(run.combo == 0)
     #expect(run.questions.count == 4)
     run.advance()
@@ -246,7 +255,7 @@ private func many(_ n: Int) -> [Entry] {
     let retry = run.current
     #expect(retry?.isRetry == true)
     #expect(retry?.key == qs[1].key)
-    #expect(run.answer(.flipped(.again, seconds: 2))?.grade == nil)
+    #expect(run.answer(.flipped(.again, seconds: 2)).map(\.grade) == [nil])
     run.advance()
     // Wrong again in practice: not asked a third time.
     #expect(run.isFinished)
@@ -254,4 +263,112 @@ private func many(_ n: Int) -> [Entry] {
     #expect(run.graded.count == 3)
     #expect(run.correct == 2)
     #expect(run.bestCombo == 1)
+    #expect(!run.isPerfect)
+    #expect(run.xp == 2 * Score.answer + Score.finished)
+}
+
+// MARK: - M2: more games, pairing, points
+
+private let known: Memory = {
+    var m = Scheduler().review(nil, .easy, at: t0)
+    m.stability = 60
+    return m
+}()
+
+@Test func japaneseIsCutIntoWordsWithTheirEndings() {
+    let pieces = Segmenter.pieces("テストが終わってからコミットしてください。", language: "ja")!
+    #expect((2...Segmenter.most).contains(pieces.count))
+    #expect(pieces.contains("終わってから"))
+    #expect(Tiles.isRight(pieces, answer: "テストが終わってからコミットしてください。", spaced: false))
+    #expect(Segmenter.pieces("念のため", language: "ja") == nil)
+    let zh = Segmenter.pieces("先别急着提交，等测试跑完再说", language: "zh")!
+    #expect(zh.count <= Segmenter.most)
+    #expect(Tiles.isRight(zh, answer: "先别急着提交，等测试跑完再说", spaced: false))
+}
+
+@Test func anExampleWithTheAnswerMakesAGap() {
+    var e = phrases[0]
+    e.card.example = "While you\u{2019}re at it, update the README too."
+    #expect(Questions.cloze(for: e) == Cloze(before: "", after: ", update the README too."))
+    e.card.example = "Update the README too."
+    #expect(Questions.cloze(for: e) == nil)
+    e.card.example = "While you're at it."
+    #expect(Questions.cloze(for: e) == nil)
+}
+
+@Test func eachGameAsksWhatItNeeds() {
+    var rng = SplitMix64(seed: 11)
+    var e = phrases[1]
+    e.card.example = "Merge the chezmoi changes on both sides."
+    let gap = Questions.make(e, memory: known, siblings: phrases, using: &rng, game: .cloze)
+    #expect(gap.game == .cloze)
+    #expect(gap.cloze?.before == "Merge the chezmoi changes ")
+
+    // Heard and built from tiles, or, too short to build, picked by its meaning.
+    let heard = Questions.make(e, memory: known, siblings: phrases, using: &rng, game: .listen)
+    #expect(heard.game == .listen && heard.tiles.count > 0 && !heard.isByMeaning)
+    #expect(heard.cap == .good)
+    let word = entry("w", front: "提交", back: "commit")
+    let meant = Questions.make(word, memory: known, siblings: phrases + [word], using: &rng, game: .listen)
+    #expect(meant.isByMeaning)
+    #expect(meant.options.contains("提交") && meant.answer == "提交")
+    #expect(meant.cap == .hard)
+    #expect(Grading.grade(Attempt(isCorrect: true, seconds: 1), for: meant) == .hard)
+
+    // Only a fix card is fixed; without a language there is nothing to hear.
+    let fix = entry("x", .fix, front: "add timeout", back: "add a timeout")
+    #expect(Questions.make(fix, memory: known, siblings: phrases, using: &rng, game: .fix).game == .fix)
+    #expect(Questions.make(e, memory: known, siblings: phrases, using: &rng, game: .fix).game != .fix)
+    let qa = entry("q", .qa, front: "2+2", back: "four", deck: DeckInfo(id: "m", title: "数学"))
+    #expect(Questions.make(qa, memory: known, siblings: [qa], using: &rng, game: .listen).game != .listen)
+    #expect(Grading.grade(Attempt(isCorrect: true, seconds: 1), for: Question(entry: fix, game: .fix)) == .good)
+
+    // A pairing takes four others whose sides read differently.
+    let pairing = Questions.make(e, memory: nil, siblings: phrases, using: &rng, game: .match)
+    #expect(pairing.game == .match)
+    #expect(pairing.group.count == 5 && pairing.group[0].key == e.key)
+    #expect(pairing.keys.count == 5)
+    #expect(!Questions.isMatchable(fix))
+}
+
+@Test func aLessonOfShortNewCardsPairsFiveOfThem() {
+    let cards = many(20)
+    var rng = SplitMix64(seed: 4)
+    let q = Planner().plan(cards, progress: Progress(), scheduler: scheduler, now: t0, newLeft: 10, using: &rng)
+    let pairings = q.filter { $0.game == .match }
+    #expect(pairings.count == 1)
+    #expect(pairings[0].group.count == 5)
+    #expect(q.first?.game != .match)
+    // Still the day's ten new cards, no more.
+    #expect(Set(q.flatMap(\.keys)).count == 10)
+    #expect(Planner(pairing: 0).plan(cards, progress: Progress(), scheduler: scheduler, now: t0, newLeft: 10, using: &rng).allSatisfy { $0.game != .match })
+}
+
+@Test func aPairingGradesEachCardAndBringsBackTheMissed() {
+    let pairing = Questions.match(Array(phrases.prefix(5)))
+    var run = LessonRun([pairing], seed: 1)
+    let missed = phrases[2].key
+    let results = run.answer(.matched(missing: [missed], seconds: 20))
+    #expect(results.count == 5)
+    #expect(results.filter { $0.grade == .again }.map(\.key) == [missed])
+    #expect(results.filter { $0.grade == .hard }.count == 4)
+    #expect(run.answerXP == 4 * Score.pair)
+    run.advance()
+    let retry = run.current!
+    #expect(retry.isRetry && retry.game == .choose && retry.key == missed)
+    #expect(Set(retry.options) == Set(phrases.prefix(5).map(\.card.back)))
+    #expect(run.progress == 0.5)
+}
+
+@Test func rightAnswersInARowEarnABonus() {
+    let qs = (0..<6).map { Question(entry: phrases[$0], game: .flip) }
+    var run = LessonRun(qs, seed: 1)
+    var xp: [Int] = []
+    for _ in qs {
+        xp += run.answer(.flipped(.good, seconds: 1)).map(\.xp)
+        run.advance()
+    }
+    #expect(xp == [10, 10, 10, 10, 15, 15])
+    #expect(run.isPerfect)
+    #expect(run.xp == 70 + Score.finished + Score.perfect)
 }

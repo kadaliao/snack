@@ -9,14 +9,14 @@ final class Speaker {
     private let synthesizer = AVSpeechSynthesizer()
 
     private init() {
-        try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .spokenAudio)
+        Audio.configure()
     }
 
-    func say(_ text: String, language: String) {
+    func say(_ text: String, language: String, slowly: Bool = false) {
         synthesizer.stopSpeaking(at: .immediate)
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: Self.voice(language))
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.95
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * (slowly ? 0.6 : 0.95)
         synthesizer.speak(utterance)
     }
 

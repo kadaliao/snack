@@ -47,14 +47,22 @@ final class LessonRecord {
     var correct: Int = 0
     var seconds: Double = 0
     var deck: String?
+    /// Experience points; 0 in lessons from before they were counted.
+    var xp: Int = 0
 
-    init(finishedAt: Date, day: Day, questions: Int, correct: Int, seconds: Double, deck: String?) {
+    init(finishedAt: Date, day: Day, questions: Int, correct: Int, seconds: Double, deck: String?, xp: Int) {
         self.finishedAt = finishedAt
         self.day = day.description
         self.questions = questions
         self.correct = correct
         self.seconds = seconds
         self.deck = deck
+        self.xp = xp
+    }
+
+    /// What it earned, or for a lesson from before points, what it would have.
+    var points: Int {
+        xp > 0 ? xp : correct * Score.answer + Score.finished
     }
 }
 
@@ -66,6 +74,7 @@ final class Study {
     let scheduler = Scheduler()
     private(set) var progress = Progress()
     private(set) var lessonsByDay: [Day: Int] = [:]
+    private(set) var xpByDay: [Day: Int] = [:]
     /// Why progress cannot be kept, if it cannot.
     private(set) var problem: String?
 
@@ -89,8 +98,11 @@ final class Study {
         do {
             let reviews = try context.fetch(FetchDescriptor<ReviewRecord>()).compactMap(\.review)
             progress = Progress(reviews, scheduler: scheduler)
-            let lessons = try context.fetch(FetchDescriptor<LessonRecord>())
-            lessonsByDay = Dictionary(grouping: lessons.compactMap { Day($0.day) }, by: { $0 }).mapValues(\.count)
+            for lesson in try context.fetch(FetchDescriptor<LessonRecord>()) {
+                guard let day = Day(lesson.day) else { continue }
+                lessonsByDay[day, default: 0] += 1
+                xpByDay[day, default: 0] += lesson.points
+            }
         } catch {
             problem = "读不出复习记录：\(error.localizedDescription)"
         }
@@ -113,10 +125,11 @@ final class Study {
         let day = Day(now)
         context?.insert(LessonRecord(
             finishedAt: now, day: day, questions: run.graded.count, correct: run.correct,
-            seconds: now.timeIntervalSince(started), deck: deck
+            seconds: now.timeIntervalSince(started), deck: deck, xp: run.xp
         ))
         save()
         lessonsByDay[day, default: 0] += 1
+        xpByDay[day, default: 0] += run.xp
     }
 
     private func save() {
@@ -130,11 +143,15 @@ final class Study {
     // MARK: - What follows
 
     func streak(at now: Date = .now) -> Streak {
-        Streak(days: Set(lessonsByDay.keys), today: Day(now))
+        Streak(lessons: lessonsByDay, today: Day(now))
     }
 
     func lessons(on day: Day) -> Int {
         lessonsByDay[day] ?? 0
+    }
+
+    func xp(on day: Day) -> Int {
+        xpByDay[day] ?? 0
     }
 
     /// New cards today still allowed.
@@ -154,12 +171,24 @@ final class Study {
             newLeft: newLeft(at: now) + extraNew, using: &rng
         )
         #if DEBUG
-        // `-SnackGames build,type,flip,choose`: the games in turn, for the UI test.
+        // `-SnackGames match,listen,…`: for the UI test, a pairing if the list has
+        // one, and the other questions in the other games in turn.
         let games = (UserDefaults.standard.string(forKey: "SnackGames") ?? "").split(separator: ",").compactMap { Game(rawValue: String($0)) }
         if !games.isEmpty {
             let byDeck = Dictionary(grouping: entries, by: \.key.deck)
-            return questions.enumerated().map { i, q in
-                Questions.make(q.entry, memory: progress.memories[q.key], siblings: byDeck[q.key.deck] ?? [], using: &rng, game: games[i % games.count])
+            var made = questions.filter { $0.game != .match }
+            if games.contains(.match) {
+                if let pairing = questions.first(where: { $0.game == .match }) {
+                    made.insert(pairing, at: 0)
+                } else if let i = made.firstIndex(where: { Questions.isMatchable($0.entry) }) {
+                    let q = made.remove(at: i)
+                    made.insert(Questions.make(q.entry, memory: progress.memories[q.key], siblings: byDeck[q.key.deck] ?? [], using: &rng, game: .match), at: 0)
+                }
+            }
+            let rest = games.filter { $0 != .match }
+            return made.enumerated().map { i, q in
+                q.game == .match || rest.isEmpty ? q
+                    : Questions.make(q.entry, memory: progress.memories[q.key], siblings: byDeck[q.key.deck] ?? [], using: &rng, game: rest[(i - (games.contains(.match) ? 1 : 0) + rest.count) % rest.count])
             }
         }
         #endif
@@ -168,7 +197,6 @@ final class Study {
 
     /// Puts the reminders of the coming days in line with how today stands.
     func syncReminders(at now: Date = .now) async {
-        let today = Day(now)
-        await Reminders.reschedule(streak: streak(at: now), lessonsToday: lessons(on: today), goal: Prefs.goalValue, now: now)
+        await Reminders.reschedule(streak: streak(at: now), xpToday: xp(on: Day(now)), goal: Prefs.goalValue, now: now)
     }
 }

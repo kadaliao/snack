@@ -1,7 +1,8 @@
 import SnackKit
 import SwiftUI
 
-/// 选一选: tap the answer among four.
+/// 选一选: tap the answer among four. Also 听一听 by meaning, and a card paired
+/// wrong asked again.
 struct ChooseView: View {
     let question: Question
     let isLocked: Bool
@@ -16,7 +17,7 @@ struct ChooseView: View {
                 Button {
                     guard picked == nil, !isLocked else { return }
                     picked = option
-                    onAnswer(Attempt(isCorrect: option == question.card.back, seconds: Date.now.timeIntervalSince(shown)))
+                    onAnswer(Attempt(isCorrect: option == question.answer, seconds: Date.now.timeIntervalSince(shown)))
                 } label: {
                     Text(option)
                         .font(.body.weight(.medium))
@@ -34,7 +35,7 @@ struct ChooseView: View {
 
     private func tone(_ option: String) -> Tone {
         guard let picked else { return .plain }
-        if option == question.card.back { return .right }
+        if option == question.answer { return .right }
         return option == picked ? .wrong : .muted
     }
 }

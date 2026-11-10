@@ -167,8 +167,12 @@ extension Game {
     var label: String {
         switch self {
         case .choose: "选一选"
+        case .match: "配一配"
         case .build: "拼一拼"
+        case .listen: "听一听"
+        case .cloze: "填一填"
         case .type: "默一默"
+        case .fix: "改一改"
         case .flip: "翻一翻"
         }
     }
@@ -176,8 +180,12 @@ extension Game {
     var symbol: String {
         switch self {
         case .choose: "square.grid.2x2"
+        case .match: "arrow.left.arrow.right"
         case .build: "puzzlepiece"
+        case .listen: "ear"
+        case .cloze: "text.insert"
         case .type: "keyboard"
+        case .fix: "pencil.line"
         case .flip: "rectangle.portrait.on.rectangle.portrait.angled"
         }
     }

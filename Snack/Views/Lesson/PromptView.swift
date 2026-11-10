@@ -17,21 +17,43 @@ struct PromptView: View {
             Text(ask)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
-            Text(card.front)
-                .font(card.front.count > 24 ? .title3.bold() : .title.bold())
-                .fixedSize(horizontal: false, vertical: true)
-            if let context = card.context, context != card.front {
-                Text(highlighted(context, card.front))
+            switch question.game {
+            case .match, .listen:
+                // Nothing to read: the cards are the question, or the sound is.
+                EmptyView()
+            case .cloze:
+                if let gap = question.cloze {
+                    (Text(gap.before) + Text("\u{2002}\u{2002}\u{2002}\u{2002}\u{2002}\u{2002}").underline(color: .snack) + Text(gap.after))
+                        .font(.title3.bold())
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Label(card.front, systemImage: "lightbulb")
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                    .lineLimit(3)
+            default:
+                Text(card.front)
+                    .font(card.front.count > 24 ? .title3.bold() : .title.bold())
+                    .fixedSize(horizontal: false, vertical: true)
+                if let context = card.context, context != card.front {
+                    Text(highlighted(context, card.front))
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var ask: String {
-        let language = Language.name(question.entry.deck.lang?.target)
+        let language = Language.name(question.language)
+        switch question.game {
+        case .match: return "把意思相同的配成对"
+        case .listen: return question.isByMeaning ? "听一听，是什么意思？" : "听一听，把听到的拼出来"
+        case .cloze: return "填上空缺的部分"
+        case .fix: return "这样说不够地道，改成更好的说法"
+        default: break
+        }
         return switch question.card.kind {
         case .phrase: language.map { "用\($0)怎么说？" } ?? "怎么说？"
         case .pattern: language.map { "这句用\($0)怎么说？" } ?? "这句怎么说？"

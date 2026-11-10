@@ -59,7 +59,7 @@ public enum Answer {
         words(s).joined(separator: " ")
     }
 
-    private static func straighten(_ s: String) -> String {
+    static func straighten(_ s: String) -> String {
         s.replacingOccurrences(of: "\u{2019}", with: "'")
             .replacingOccurrences(of: "\u{2018}", with: "'")
             .replacingOccurrences(of: "\u{201C}", with: "\"")
@@ -112,13 +112,14 @@ public enum Tiles {
     /// More tiles than this and a sentence is cut into pieces of a few words.
     public static let most = 12
 
-    /// The answer's pieces in order: the card's own `tiles`, or else in a language
-    /// written with spaces its words. Nil when it is less than two pieces.
-    public static func cut(_ card: Card, spaced: Bool) -> [String]? {
+    /// The answer's pieces in order: the card's own `tiles`; or else in a language
+    /// written with spaces its words, and in a deck learning Japanese or Chinese
+    /// the words a tokenizer finds. Nil when it is less than two pieces.
+    public static func cut(_ card: Card, spaced: Bool, language: String? = nil) -> [String]? {
         if let given = card.tiles?.map({ $0.trimmingCharacters(in: .whitespaces) }).filter({ !$0.isEmpty }), given.count >= 2 {
             return given
         }
-        guard spaced else { return nil }
+        guard spaced else { return language.flatMap { Segmenter.pieces(card.back, language: $0) } }
         let pieces = shown(card.back)
         guard pieces.count >= 2 else { return nil }
         guard pieces.count > most else { return pieces }

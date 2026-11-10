@@ -5,11 +5,15 @@ import SwiftUI
 struct TodayView: View {
     let inbox: Inbox
     let study: Study
+    /// Bumped to start a lesson, as the widget asks.
+    let lessonAsked: Int
 
-    @AppStorage(Prefs.goal) private var goal = 3
+    @AppStorage(Prefs.goal) private var goal = 300
     @AppStorage(Prefs.newPerDay) private var newPerDay = 10
     @State private var lesson: LessonSetup?
     @State private var isSetting = false
+    /// The widget's last ask already answered.
+    @State private var lessonsAnswered = 0
 
     var body: some View {
         NavigationStack {
@@ -29,13 +33,28 @@ struct TodayView: View {
                 LessonView(setup: setup, study: study)
             }
         }
+        .onChange(of: lessonAsked) { answerAsk() }
+        .onChange(of: study.xpByDay) { WidgetBridge.update(library: inbox.library, study: study) }
+        .onChange(of: inbox.library) { WidgetBridge.update(library: inbox.library, study: study) }
+        .onAppear {
+            WidgetBridge.update(library: inbox.library, study: study)
+            // Opened from the widget before this page was there.
+            answerAsk()
+        }
+    }
+
+    /// Starts the lesson the widget asked for, once.
+    private func answerAsk() {
+        guard lessonAsked > lessonsAnswered else { return }
+        lessonsAnswered = lessonAsked
+        if lesson == nil { begin(inbox.library.entries()) }
     }
 
     private func page(now: Date) -> some View {
         let entries = inbox.library.entries()
         let today = Day(now)
         let streak = study.streak(at: now)
-        let done = study.lessons(on: today)
+        let xp = study.xp(on: today)
         let outlook = Planner().outlook(entries, progress: study.progress, now: now, newLeft: study.newLeft(at: now, perDay: newPerDay))
         return ScrollView {
             VStack(spacing: 16) {
@@ -46,7 +65,7 @@ struct TodayView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 StreakCard(streak: streak, today: today, days: Set(study.lessonsByDay.keys))
-                GoalCard(done: done, goal: goal)
+                GoalCard(xp: xp, goal: goal, lessons: study.lessons(on: today))
                 start(entries: entries, outlook: outlook, now: now)
                 if !entries.isEmpty {
                     MasteryBar(entries: entries, study: study)
@@ -132,6 +151,20 @@ private struct StreakCard: View {
                         .foregroundStyle(streak.isAtRisk ? Color.snack : .secondary)
                 }
                 Spacer()
+                VStack(spacing: 2) {
+                    HStack(spacing: 2) {
+                        ForEach(0..<Streak.mostFreezes, id: \.self) { i in
+                            Image(systemName: "snowflake")
+                                .foregroundStyle(i < streak.freezes ? Color.cyan : Color(.systemGray4))
+                        }
+                    }
+                    .font(.headline)
+                    Text(streak.freezes == Streak.mostFreezes ? "冻结卡满了" : "再刷 \(streak.lessonsToFreeze) 节")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("冻结卡 \(streak.freezes) 张")
             }
             HStack {
                 ForEach(-6...0, id: \.self) { offset in
@@ -142,9 +175,11 @@ private struct StreakCard: View {
                             .foregroundStyle(offset == 0 ? .primary : .secondary)
                         ZStack {
                             Circle()
-                                .fill(days.contains(day) ? Color.snack : Color(.systemGray5))
+                                .fill(days.contains(day) ? Color.snack : streak.frozen.contains(day) ? Color.cyan : Color(.systemGray5))
                             if days.contains(day) {
                                 Image(systemName: "flame.fill").font(.caption).foregroundStyle(.white)
+                            } else if streak.frozen.contains(day) {
+                                Image(systemName: "snowflake").font(.caption).foregroundStyle(.white)
                             }
                         }
                         .frame(width: 28, height: 28)
@@ -160,7 +195,9 @@ private struct StreakCard: View {
 
     private var message: String {
         if streak.isDoneToday { return streak.count == 1 ? "第一天，明天再来" : "今天已经打卡" }
-        if streak.isAtRisk { return "今天还没刷，刷一节续上连胜" }
+        if streak.isAtRisk {
+            return streak.freezes > 0 ? "今天还没刷，不刷会用掉一张冻结卡" : "今天还没刷，刷一节续上连胜"
+        }
         return streak.longest > 0 ? "最长连胜 \(streak.longest) 天，重新开始吧" : "刷完一节，连胜就开始了"
     }
 
@@ -170,22 +207,32 @@ private struct StreakCard: View {
 }
 
 private struct GoalCard: View {
-    let done: Int
+    let xp: Int
     let goal: Int
+    let lessons: Int
 
     var body: some View {
         HStack(spacing: 16) {
             ZStack {
-                Ring(value: Double(done) / Double(max(goal, 1)), color: done >= goal ? .right : .snack)
-                Text("\(min(done, 99))/\(goal)")
-                    .font(.headline.monospacedDigit())
+                Ring(value: Double(xp) / Double(max(goal, 1)), color: xp >= goal ? .right : .snack)
+                VStack(spacing: 0) {
+                    Text("\(xp)")
+                        .font(.headline.monospacedDigit())
+                        .contentTransition(.numericText())
+                    Text("XP").font(.caption2.bold()).foregroundStyle(.secondary)
+                }
             }
             .frame(width: 64, height: 64)
             VStack(alignment: .leading, spacing: 4) {
-                Text("今天的目标").font(.headline)
-                Text(done >= goal ? "完成了，明天见 🎉" : "每天 \(goal) 节，一节两分钟左右")
+                Text("今天的目标 \(goal) XP").font(.headline)
+                Text(xp >= goal ? "完成了，明天见 🎉" : "还差 \(goal - xp) XP，大约 \((goal - xp + 99) / 100) 节")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                if lessons > 0 {
+                    Text("今天刷了 \(lessons) 节")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             Spacer()
         }

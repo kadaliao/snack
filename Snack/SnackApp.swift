@@ -6,6 +6,8 @@ struct SnackApp: App {
     // `-SnackInMemory YES`: progress that is gone when the app is, for the UI test.
     @State private var study = Study(inMemory: UserDefaults.standard.bool(forKey: "SnackInMemory"))
     @Environment(\.scenePhase) private var phase
+    /// Bumped to start a lesson, as the widget asks.
+    @State private var lessonAsked = 0
 
     init() {
         Prefs.register()
@@ -13,16 +15,38 @@ struct SnackApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView(inbox: inbox, study: study)
-                .task {
-                    inbox.onRepeated = { [study] keys in study.recordRepeated(keys) }
-                    await inbox.start()
-                }
+            #if DEBUG
+            if UserDefaults.standard.bool(forKey: "SnackWidgetGallery") {
+                WidgetGallery()
+            } else {
+                root
+            }
+            #else
+            root
+            #endif
         }
         .onChange(of: phase) { _, phase in
-            guard phase == .active else { return }
-            inbox.refresh()
-            Task { await study.syncReminders() }
+            switch phase {
+            case .active:
+                inbox.refresh()
+                WidgetBridge.update(library: inbox.library, study: study)
+                Task { await study.syncReminders() }
+            case .background:
+                WidgetBridge.update(library: inbox.library, study: study)
+            default:
+                break
+            }
         }
+    }
+
+    private var root: some View {
+        RootView(inbox: inbox, study: study, lessonAsked: lessonAsked)
+            .onOpenURL { url in
+                if url == WidgetSnapshot.lessonURL { lessonAsked += 1 }
+            }
+            .task {
+                inbox.onRepeated = { [study] keys in study.recordRepeated(keys) }
+                await inbox.start()
+            }
     }
 }

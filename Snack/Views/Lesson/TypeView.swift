@@ -1,7 +1,8 @@
 import SnackKit
 import SwiftUI
 
-/// 默一默: type the answer. A hint shows each word's first letter; giving up
+/// 默一默: type the answer. Also 填一填, the gap in the example, and 改一改, what
+/// the learner wrote to edit. A hint shows each word's first letter; giving up
 /// shows the answer.
 struct TypeView: View {
     let question: Question
@@ -9,9 +10,16 @@ struct TypeView: View {
     let onAnswer: (Attempt, String) -> Void
 
     @State private var shown = Date.now
-    @State private var text = ""
+    @State private var text: String
     @State private var usedHint = false
     @FocusState private var isFocused: Bool
+
+    init(question: Question, isLocked: Bool, onAnswer: @escaping (Attempt, String) -> Void) {
+        self.question = question
+        self.isLocked = isLocked
+        self.onAnswer = onAnswer
+        _text = State(initialValue: question.game == .fix ? question.card.front : "")
+    }
 
     var body: some View {
         VStack(spacing: 14) {
@@ -61,7 +69,8 @@ struct TypeView: View {
     private var elapsed: Double { Date.now.timeIntervalSince(shown) }
 
     private var placeholder: String {
-        Language.name(question.entry.deck.lang?.target).map { "用\($0)写出来" } ?? "写出答案"
+        if question.game == .cloze { return "空缺的部分" }
+        return Language.name(question.language).map { "用\($0)写出来" } ?? "写出答案"
     }
 
     /// Each word's first letter, the rest blanks: "w____ y_____ a_ i_".

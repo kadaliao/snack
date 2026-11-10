@@ -60,10 +60,12 @@ struct FlipView: View {
     }
 }
 
-/// A card's answer and what goes with it: reading, example, pattern, why.
+/// A card's answer and what goes with it: reading, example, pattern, why; and
+/// after hearing it, what it means.
 struct AnswerDetails: View {
     let card: Card
     var showsAnswer = true
+    var showsFront = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -71,6 +73,9 @@ struct AnswerDetails: View {
                 Text(card.back)
                     .font(.title3.bold())
                     .fixedSize(horizontal: false, vertical: true)
+            }
+            if showsFront {
+                Text(card.front).font(.callout)
             }
             if let reading = card.reading {
                 Text(reading).font(.callout).foregroundStyle(.secondary)

@@ -138,3 +138,27 @@ private let scheduler = Scheduler()
     #expect(streak.count == 2)
     #expect(streak.isDoneToday)
 }
+
+@Test func freezesKeepAStreakOverAMissedDay() {
+    let start = Day(year: 2026, month: 11, day: 1)
+    // Ten lessons on the first day earn a freeze; the second day is missed.
+    let lessons: [Day: Int] = [start: 10, start.adding(2): 1]
+    let s = Streak(lessons: lessons, today: start.adding(2))
+    #expect(s.count == 2)
+    #expect(s.frozen == [start.adding(1)])
+    #expect(s.freezes == 0)
+    #expect(s.lessonsToFreeze == 9)
+
+    // Two days missed with one freeze: it starts over.
+    let broken = Streak(lessons: [start: 10, start.adding(3): 1], today: start.adding(3))
+    #expect(broken.count == 1)
+
+    // No more than two in hand; waiting for today, none is used yet.
+    let many = Streak(lessons: [start: 35], today: start.adding(1))
+    #expect(many.freezes == 2)
+    #expect(many.isAtRisk)
+    #expect(many.count == 1)
+    #expect(many.frozen.isEmpty)
+    #expect(Streak(lessons: [start: 35], today: start.adding(3)).count == 1)
+    #expect(Streak(lessons: [start: 35], today: start.adding(4)).count == 0)
+}

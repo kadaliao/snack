@@ -61,32 +61,62 @@ public struct Day: Hashable, Comparable, Codable, Sendable, CustomStringConverti
 
 /// Days in a row with at least one lesson, up to today, or up to yesterday while
 /// today has none yet.
+///
+/// Every ten lessons earn a freeze, two at most in hand. A day without a lesson
+/// uses one up, and the streak goes on over it, though the day does not add to it.
 public struct Streak: Equatable, Sendable {
+    public static let lessonsPerFreeze = 10
+    public static let mostFreezes = 2
+
     public var count: Int
     public var isDoneToday: Bool
     public var longest: Int
+    /// Freezes in hand.
+    public var freezes: Int
+    /// Days a freeze was used on.
+    public var frozen: Set<Day>
+    /// Lessons until the next freeze is earned.
+    public var lessonsToFreeze: Int
 
-    public init(days: Set<Day>, today: Day) {
-        isDoneToday = days.contains(today)
-        var day = isDoneToday ? today : today.adding(-1)
-        var count = 0
-        while days.contains(day) {
-            count += 1
-            day = day.adding(-1)
+    /// From the lessons done each day, up to `today`.
+    public init(lessons: [Day: Int], today: Day) {
+        var count = 0, longest = 0, freezes = 0, toward = 0
+        var frozen = Set<Day>()
+        if var day = lessons.filter({ $0.value > 0 }).keys.min() {
+            while day <= today {
+                let n = lessons[day] ?? 0
+                if n > 0 {
+                    count += 1
+                    toward += n
+                    while toward >= Self.lessonsPerFreeze {
+                        toward -= Self.lessonsPerFreeze
+                        freezes = min(Self.mostFreezes, freezes + 1)
+                    }
+                } else if day < today {
+                    if count > 0 && freezes > 0 {
+                        freezes -= 1
+                        frozen.insert(day)
+                    } else {
+                        count = 0
+                    }
+                }
+                longest = max(longest, count)
+                day = day.adding(1)
+            }
         }
         self.count = count
-
-        var longest = 0
-        var run = 0
-        var previous: Day?
-        for day in days.sorted() {
-            run = previous.map { $0.adding(1) == day } == true ? run + 1 : 1
-            longest = max(longest, run)
-            previous = day
-        }
         self.longest = longest
+        self.freezes = freezes
+        self.frozen = frozen
+        self.lessonsToFreeze = Self.lessonsPerFreeze - toward
+        isDoneToday = (lessons[today] ?? 0) > 0
     }
 
-    /// A streak that ends tonight unless a lesson is done today.
+    /// From the days with a lesson, one lesson each.
+    public init(days: Set<Day>, today: Day) {
+        self.init(lessons: Dictionary(uniqueKeysWithValues: days.map { ($0, 1) }), today: today)
+    }
+
+    /// A streak that ends, or takes a freeze, tonight unless a lesson is done today.
     public var isAtRisk: Bool { count > 0 && !isDoneToday }
 }

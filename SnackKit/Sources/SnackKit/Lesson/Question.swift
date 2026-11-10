@@ -62,28 +62,57 @@ public struct Question: Identifiable, Sendable, Equatable {
     public var id: UUID
     public var entry: Entry
     public var game: Game
-    /// 选一选: the answer and the wrong ones, shuffled.
+    /// 选一选, and 听一听 by meaning: the answer and the wrong ones, shuffled.
     public var options: [String]
-    /// 拼一拼: the answer's tiles and a few more, shuffled.
+    /// 拼一拼 and 听一听: the answer's tiles and a few more, shuffled.
     public var tiles: [Tile]
     /// How many of the tiles make the answer.
     public var answerTiles: Int
+    /// 配一配: the cards to pair, this one first.
+    public var group: [Entry]
+    /// 填一填: the example sentence around the gap.
+    public var cloze: Cloze?
     /// Asked again at the end of the lesson after a wrong answer: practice, not a review.
     public var isRetry: Bool
 
-    public init(id: UUID = UUID(), entry: Entry, game: Game, options: [String] = [], tiles: [Tile] = [], answerTiles: Int = 0, isRetry: Bool = false) {
+    public init(
+        id: UUID = UUID(), entry: Entry, game: Game, options: [String] = [], tiles: [Tile] = [], answerTiles: Int = 0,
+        group: [Entry] = [], cloze: Cloze? = nil, isRetry: Bool = false
+    ) {
         self.id = id
         self.entry = entry
         self.game = game
         self.options = options
         self.tiles = tiles
         self.answerTiles = answerTiles
+        self.group = group
+        self.cloze = cloze
         self.isRetry = isRetry
     }
 
     public var key: CardKey { entry.key }
     public var card: Card { entry.card }
     public var isSpaced: Bool { entry.isSpaced }
+    /// The language learnt, when the deck says.
+    public var language: String? { entry.deck.lang?.target }
+
+    /// The cards it asks: one, or a pairing's five.
+    public var keys: [CardKey] { game == .match ? group.map(\.key) : [key] }
+
+    /// Listening for the meaning picks the front among fronts; everything else
+    /// gives the back.
+    public var isByMeaning: Bool { game == .listen && tiles.isEmpty }
+    public var answer: String { isByMeaning ? card.front : card.back }
+    public var cap: Grade { isByMeaning ? .hard : game.cap }
+
+    /// The question with nothing to hear: a heard sentence is put together from
+    /// the same tiles, read; a heard word is turned over.
+    public func withoutSound() -> Question {
+        guard game == .listen else { return self }
+        return tiles.isEmpty
+            ? Question(entry: entry, game: .flip, isRetry: isRetry)
+            : Question(entry: entry, game: .build, tiles: tiles, answerTiles: answerTiles, isRetry: isRetry)
+    }
 
     /// The same question once more, shuffled again.
     public func retry<R: RandomNumberGenerator>(using rng: inout R) -> Question {
@@ -93,6 +122,17 @@ public struct Question: Identifiable, Sendable, Equatable {
         q.options.shuffle(using: &rng)
         q.tiles.shuffle(using: &rng)
         return q
+    }
+}
+
+/// An example sentence with a gap where the answer goes.
+public struct Cloze: Sendable, Equatable {
+    public var before: String
+    public var after: String
+
+    public init(before: String, after: String) {
+        self.before = before
+        self.after = after
     }
 }
 
@@ -109,37 +149,77 @@ public enum Questions {
         }
     }
 
-    /// A question of `entry`, in the hardest game it is ready for that its fields
-    /// allow, now and then an easier one for a change. `siblings` are the cards of
-    /// its deck, for wrong answers.
+    /// The games for each stage, and how often each comes up among those a card can be asked in.
+    static func weights(_ stage: Stage) -> [(Game, Int)] {
+        switch stage {
+        case .new: [(.choose, 1)]
+        case .learning: [(.build, 3), (.listen, 2), (.cloze, 2), (.choose, 1)]
+        case .familiar: [(.type, 3), (.fix, 3), (.cloze, 2), (.build, 2), (.listen, 2)]
+        case .known: [(.type, 4), (.fix, 4), (.cloze, 2), (.listen, 1), (.build, 1)]
+        }
+    }
+
+    /// A question of `entry`, in a game picked for how well it is known among
+    /// those its fields allow. `siblings` are the cards of its deck, for wrong
+    /// answers and for pairing.
     public static func make<R: RandomNumberGenerator>(
         _ entry: Entry, memory: Memory?, siblings: [Entry], using rng: inout R, game forced: Game? = nil
     ) -> Question {
         let options = options(for: entry, siblings: siblings, using: &rng)
         let bank = bank(for: entry, siblings: siblings, using: &rng)
+        let gap = cloze(for: entry)
+        let typeable = isTypeable(entry)
         var ready: Set<Game> = [.flip]
         if options != nil { ready.insert(.choose) }
         if bank != nil { ready.insert(.build) }
-        if isTypeable(entry) { ready.insert(.type) }
-
-        let order: [Game] = switch Stage(memory) {
-        case .new:
-            [.choose, .build, .flip]
-        case .learning:
-            Int.random(in: 0..<4, using: &rng) == 0 ? [.choose, .build, .type, .flip] : [.build, .choose, .type, .flip]
-        case .familiar:
-            Bool.random(using: &rng) ? [.type, .build, .flip, .choose] : [.build, .type, .flip, .choose]
-        case .known:
-            [.type, .build, .flip, .choose]
+        if typeable { ready.insert(.type) }
+        if gap != nil && typeable { ready.insert(.cloze) }
+        if entry.card.kind == .fix && typeable && Answer.comparable(entry.card.front) != Answer.comparable(entry.card.back) {
+            ready.insert(.fix)
         }
-        let game = forced.flatMap { ready.contains($0) ? $0 : nil } ?? order.first { ready.contains($0) } ?? .flip
-        return Question(
-            entry: entry,
-            game: game,
-            options: game == .choose ? options ?? [] : [],
-            tiles: game == .build ? bank?.tiles ?? [] : [],
-            answerTiles: bank?.answer ?? 0
-        )
+        var meanings: [String]?
+        if entry.deck.lang?.target != nil {
+            meanings = bank == nil ? Self.options(for: entry, siblings: siblings, side: \.front, using: &rng) : nil
+            if bank != nil || meanings != nil { ready.insert(.listen) }
+        }
+        let pairs = isMatchable(entry) ? partners(for: entry, siblings: siblings) : []
+        if pairs.count >= 3 { ready.insert(.match) }
+
+        let game = forced.flatMap { ready.contains($0) ? $0 : nil }
+            ?? pick(weights(Stage(memory)), from: ready, using: &rng)
+            ?? [Game.choose, .build, .type].first { ready.contains($0) }
+            ?? .flip
+        switch game {
+        case .choose:
+            return Question(entry: entry, game: game, options: options ?? [])
+        case .build:
+            return Question(entry: entry, game: game, tiles: bank?.tiles ?? [], answerTiles: bank?.answer ?? 0)
+        case .listen:
+            return Question(entry: entry, game: game, options: meanings ?? [], tiles: bank?.tiles ?? [], answerTiles: bank?.answer ?? 0)
+        case .cloze:
+            return Question(entry: entry, game: game, cloze: gap)
+        case .match:
+            return Question(entry: entry, game: game, group: [entry] + pairs.prefix(4))
+        case .type, .fix, .flip:
+            return Question(entry: entry, game: game)
+        }
+    }
+
+    /// Five cards to pair, the first of them `entries[0]`.
+    public static func match(_ entries: [Entry]) -> Question {
+        Question(entry: entries[0], game: .match, group: entries)
+    }
+
+    static func pick<R: RandomNumberGenerator>(_ weights: [(Game, Int)], from ready: Set<Game>, using rng: inout R) -> Game? {
+        let open = weights.filter { ready.contains($0.0) }
+        let total = open.reduce(0) { $0 + $1.1 }
+        guard total > 0 else { return nil }
+        var n = Int.random(in: 0..<total, using: &rng)
+        for (game, weight) in open {
+            if n < weight { return game }
+            n -= weight
+        }
+        return nil
     }
 
     /// Short enough to type: a few words, or a few characters without spaces.
@@ -150,11 +230,31 @@ public enum Questions {
             : Answer.squash(back).count <= 8
     }
 
+    /// Short on both sides, to fit a column of five; and not a fix card, whose
+    /// front is the learner's own wrong words, not a meaning.
+    public static func isMatchable(_ entry: Entry) -> Bool {
+        entry.card.kind != .fix && entry.card.front.count <= 12 && entry.card.back.count <= 24
+    }
+
+    /// Cards of the deck to pair with this one, none reading the same on either side.
+    static func partners(for entry: Entry, siblings: [Entry]) -> [Entry] {
+        var fronts: Set<String> = [Answer.comparable(entry.card.front)]
+        var backs: Set<String> = [Answer.comparable(entry.card.back)]
+        return siblings.filter { e in
+            e.key != entry.key && isMatchable(e)
+                && fronts.insert(Answer.comparable(e.card.front)).inserted
+                && backs.insert(Answer.comparable(e.card.back)).inserted
+        }
+    }
+
     /// The answer and two or three wrong ones, shuffled; nil without two wrong ones.
     /// The card's own `distractors` first, and for a fix card what the learner
     /// wrote; then answers from its deck of the same kind and about its length.
-    static func options<R: RandomNumberGenerator>(for entry: Entry, siblings: [Entry], using rng: inout R) -> [String]? {
-        let answer = entry.card.back
+    /// `side` \.front gives meanings instead.
+    static func options<R: RandomNumberGenerator>(
+        for entry: Entry, siblings: [Entry], side: KeyPath<Card, String> = \.back, using rng: inout R
+    ) -> [String]? {
+        let answer = entry.card[keyPath: side]
         var used: Set<String> = [Answer.comparable(answer)]
         var wrong: [String] = []
         func add(_ s: String) {
@@ -162,16 +262,20 @@ public enum Questions {
             guard wrong.count < 3, !k.isEmpty, used.insert(k).inserted else { return }
             wrong.append(s)
         }
-        if entry.card.kind == .fix { add(entry.card.front) }
-        for d in (entry.card.distractors ?? []).shuffled(using: &rng) { add(d) }
+        if side == \Card.back {
+            if entry.card.kind == .fix { add(entry.card.front) }
+            for d in (entry.card.distractors ?? []).shuffled(using: &rng) { add(d) }
+        }
         let others = siblings.filter { $0.key != entry.key }
         for sameKind in [true, false] where wrong.count < 3 {
             let near = others
                 .filter { ($0.card.kind == entry.card.kind) == sameKind }
-                .sorted { (abs($0.card.back.count - answer.count), $0.key.card) < (abs($1.card.back.count - answer.count), $1.key.card) }
+                .sorted {
+                    (abs($0.card[keyPath: side].count - answer.count), $0.key.card) < (abs($1.card[keyPath: side].count - answer.count), $1.key.card)
+                }
                 .prefix(8)
                 .shuffled(using: &rng)
-            for e in near { add(e.card.back) }
+            for e in near { add(e.card[keyPath: side]) }
         }
         guard wrong.count >= 2 else { return nil }
         return (wrong + [answer]).shuffled(using: &rng)
@@ -180,7 +284,8 @@ public enum Questions {
     /// The answer's tiles and two or three tiles from other answers of its deck
     /// that are not in it, shuffled; nil when the answer cannot be cut.
     static func bank<R: RandomNumberGenerator>(for entry: Entry, siblings: [Entry], using rng: inout R) -> (tiles: [Tile], answer: Int)? {
-        guard let pieces = Tiles.cut(entry.card, spaced: entry.isSpaced) else { return nil }
+        let language = entry.deck.lang?.target
+        guard let pieces = Tiles.cut(entry.card, spaced: entry.isSpaced, language: language) else { return nil }
         let others = siblings.filter { $0.key != entry.key }
         var extra: [String] = []
         if entry.isSpaced {
@@ -192,12 +297,26 @@ public enum Questions {
             }
             extra = Array(pool.shuffled(using: &rng).prefix(pieces.count <= 4 ? 2 : 3))
         } else {
+            // Cutting is slow next to splitting on spaces: a dozen others are enough.
             let inAnswer = Set(pieces)
-            let pool = Set(others.flatMap { $0.card.tiles ?? [] }).subtracting(inAnswer).sorted()
-            extra = Array(pool.shuffled(using: &rng).prefix(2))
+            let pool = others.shuffled(using: &rng).prefix(12)
+                .flatMap { Tiles.cut($0.card, spaced: false, language: language) ?? [] }
+            extra = Array(Set(pool).subtracting(inAnswer).sorted().shuffled(using: &rng).prefix(2))
         }
         let tiles = (pieces + extra).enumerated().map { Tile(id: $0.offset, text: $0.element) }
         return (tiles.shuffled(using: &rng), pieces.count)
+    }
+
+    /// The card's example with a gap where its answer is; nil without an example
+    /// that holds the answer and more.
+    public static func cloze(for entry: Entry) -> Cloze? {
+        guard let example = entry.card.example else { return nil }
+        let text = Answer.straighten(example)
+        let answer = Answer.straighten(entry.card.back).trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
+        guard !answer.isEmpty, let range = text.range(of: answer, options: [.caseInsensitive, .diacriticInsensitive]) else { return nil }
+        let gap = Cloze(before: String(text[..<range.lowerBound]), after: String(text[range.upperBound...]))
+        let rest = (gap.before + gap.after).trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
+        return rest.isEmpty ? nil : gap
     }
 
     /// A word taken from the start of another sentence, without the capital that

@@ -14,6 +14,8 @@ struct LessonEnd {
     var correct: Int
     var seconds: Double
     var bestCombo: Int
+    var xp: Int
+    var isPerfect: Bool
     /// Cards met for the first time.
     var learned: Int
     /// Cards known better than before.
@@ -21,10 +23,14 @@ struct LessonEnd {
     var streak: Streak
     /// This lesson was the day's first, and the streak grew by it.
     var isStreakNew: Bool
-    var lessonsToday: Int
+    var freezeEarned: Bool
+    var xpBefore: Int
+    var xpToday: Int
     var goal: Int
 
     var accuracy: Double { graded == 0 ? 0 : Double(correct) / Double(graded) }
+    /// This lesson reached the day's goal.
+    var reachedGoal: Bool { xpBefore < goal && xpToday >= goal }
 }
 
 /// A lesson from first question to last page. Each first answer is graded and
@@ -37,7 +43,8 @@ struct LessonView: View {
     @AppStorage(Prefs.speak) private var speaks = true
 
     @State private var run: LessonRun
-    @State private var result: LessonRun.Result?
+    /// The results of the current question once answered, one per card.
+    @State private var answered: [LessonRun.Result] = []
     @State private var typed: String?
     @State private var end: LessonEnd?
     @State private var isQuitting = false
@@ -49,9 +56,11 @@ struct LessonView: View {
     init(setup: LessonSetup, study: Study) {
         self.setup = setup
         self.study = study
-        _run = State(initialValue: LessonRun(setup.questions))
+        var run = LessonRun(setup.questions)
+        if Prefs.isQuiet { run.replaceCurrent { $0.withoutSound() } }
+        _run = State(initialValue: run)
         _before = State(initialValue: Dictionary(
-            setup.questions.map { ($0.key, study.mastery($0.key)) },
+            setup.questions.flatMap(\.keys).map { ($0, study.mastery($0)) },
             uniquingKeysWith: { first, _ in first }
         ))
     }
@@ -86,8 +95,8 @@ struct LessonView: View {
         }
         .frame(maxHeight: .infinity, alignment: .top)
         .overlay(alignment: .bottom) {
-            if let result {
-                FeedbackPanel(result: result, typed: typed, onSpeak: speaker(for: result.question)) { next() }
+            if let first = answered.first {
+                FeedbackPanel(results: answered, typed: typed, onSpeak: speaker(for: first.question)) { next() }
                     .transition(.move(edge: .bottom))
             }
         }
@@ -95,12 +104,12 @@ struct LessonView: View {
             Button("退出这一节", role: .destructive) { dismiss() }
             Button("接着刷", role: .cancel) {}
         } message: {
-            Text("已经答过的题会记下来，但这一节不算完成。")
+            Text("已经答过的题会记下来，但这一节不算完成，也不加 XP。")
         }
     }
 
     private var topBar: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             Button { isQuitting = true } label: {
                 Image(systemName: "xmark")
                     .font(.title3.weight(.semibold))
@@ -127,21 +136,31 @@ struct LessonView: View {
                     .contentTransition(.numericText())
                     .transition(.scale.combined(with: .opacity))
             }
+            Label("\(run.answerXP)", systemImage: "bolt.fill")
+                .font(.subheadline.bold().monospacedDigit())
+                .foregroundStyle(.yellow.mix(with: .orange, by: 0.4))
+                .contentTransition(.numericText())
+                .accessibilityLabel("\(run.answerXP) XP")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .animation(.snappy, value: run.combo >= 2)
+        .animation(.snappy, value: run.answerXP)
     }
 
     @ViewBuilder
     private func game(_ q: Question) -> some View {
-        let isLocked = result != nil
+        let isLocked = !answered.isEmpty
         switch q.game {
         case .choose:
             ChooseView(question: q, isLocked: isLocked) { take($0) }
+        case .match:
+            MatchView(question: q) { take($0) }
         case .build:
             BuildView(question: q, isLocked: isLocked) { take($0) }
-        case .type:
+        case .listen:
+            ListenView(question: q, isLocked: isLocked, onAnswer: { take($0) }, onQuiet: quiet)
+        case .type, .cloze, .fix:
             TypeView(question: q, isLocked: isLocked) { take($0, typed: $1) }
         case .flip:
             FlipView(question: q) { take($0) }
@@ -149,50 +168,69 @@ struct LessonView: View {
     }
 
     private func speaker(for q: Question) -> (() -> Void)? {
-        guard let language = q.entry.deck.lang?.target else { return nil }
+        guard q.game != .match, let language = q.language else { return nil }
         return { Speaker.shared.say(q.card.back, language: language) }
     }
 
     private func take(_ attempt: Attempt, typed: String? = nil) {
-        guard let r = run.answer(attempt) else { return }
-        if let grade = r.grade {
-            study.record(Review(card: r.question.key, grade: grade, at: .now, game: r.question.game, seconds: attempt.seconds))
+        let results = run.answer(attempt)
+        guard let first = results.first else { return }
+        let now = Date.now
+        for r in results {
+            if let grade = r.grade {
+                study.record(Review(card: r.key, grade: grade, at: now, game: r.question.game, seconds: attempt.seconds))
+            }
         }
-        if r.isCorrect { rights += 1 } else { wrongs += 1 }
+        let isRight = attempt.isCorrect && !attempt.gaveUp
+        if isRight { rights += 1 } else { wrongs += 1 }
+        Sounds.shared.play(isRight ? .right : .wrong)
         // A turned card has shown its answer already.
-        if r.question.game == .flip {
+        if first.question.game == .flip {
             next()
             return
         }
         self.typed = typed
-        withAnimation(.snappy(duration: 0.25)) { result = r }
-        if speaks { speaker(for: r.question)?() }
+        withAnimation(.snappy(duration: 0.25)) { answered = results }
+        if speaks && !Prefs.isQuiet { speaker(for: first.question)?() }
+    }
+
+    /// No listening for a quarter of an hour: this question and the next heard
+    /// ones are read instead, with nothing held against the card.
+    private func quiet() {
+        UserDefaults.standard.set(Date.now.addingTimeInterval(15 * 60), forKey: Prefs.quietUntil)
+        withAnimation(.snappy) { run.replaceCurrent { $0.withoutSound() } }
     }
 
     private func next() {
         withAnimation(.snappy(duration: 0.3)) {
-            result = nil
+            answered = []
             typed = nil
             run.advance()
+            if Prefs.isQuiet { run.replaceCurrent { $0.withoutSound() } }
         }
         if run.isFinished { finish() }
     }
 
     private func finish() {
         let now = Date.now
-        let wasDone = study.streak(at: now).isDoneToday
+        let today = Day(now)
+        let old = study.streak(at: now)
+        let xpBefore = study.xp(on: today)
         study.finishLesson(run, started: started, deck: setup.deck, at: now)
         var learned = 0, leveledUp = 0
-        for (key, old) in before {
+        for (key, was) in before {
             let new = study.mastery(key)
-            if old == .new && new != .new { learned += 1 } else if new > old { leveledUp += 1 }
+            if was == .new && new != .new { learned += 1 } else if new > was { leveledUp += 1 }
         }
         let streak = study.streak(at: now)
+        Sounds.shared.play(.done)
         withAnimation(.snappy) {
             end = LessonEnd(
                 graded: run.graded.count, correct: run.correct, seconds: now.timeIntervalSince(started),
-                bestCombo: run.bestCombo, learned: learned, leveledUp: leveledUp, streak: streak,
-                isStreakNew: !wasDone && streak.isDoneToday, lessonsToday: study.lessons(on: Day(now)), goal: Prefs.goalValue
+                bestCombo: run.bestCombo, xp: run.xp, isPerfect: run.isPerfect, learned: learned, leveledUp: leveledUp,
+                streak: streak, isStreakNew: !old.isDoneToday && streak.isDoneToday,
+                freezeEarned: streak.freezes > old.freezes, xpBefore: xpBefore, xpToday: study.xp(on: today),
+                goal: Prefs.goalValue
             )
         }
     }
@@ -208,19 +246,32 @@ struct LessonView: View {
 
 /// What the answer was, sliding up once a question is answered.
 private struct FeedbackPanel: View {
-    let result: LessonRun.Result
+    let results: [LessonRun.Result]
     let typed: String?
     let onSpeak: (() -> Void)?
     let onContinue: () -> Void
 
     var body: some View {
-        let ok = result.isCorrect
+        let first = results[0]
+        let isMatch = first.question.game == .match
+        let ok = isMatch ? results.allSatisfy(\.isCorrect) : first.isCorrect
         let color: Color = ok ? .right : .wrong
+        let xp = results.reduce(0) { $0 + $1.xp }
+        let bonus = results.reduce(0) { $0 + $1.bonus }
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label(title, systemImage: ok ? "checkmark.circle.fill" : "xmark.circle.fill")
+            HStack(spacing: 10) {
+                Label(title(first, ok: ok), systemImage: ok ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .font(.title3.bold())
                     .foregroundStyle(color)
+                if xp > 0 {
+                    Text(bonus > 0 ? "+\(xp) XP 连对加成" : "+\(xp) XP")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(bonus > 0 ? Color.snack : .yellow.mix(with: .orange, by: 0.4), in: .capsule)
+                        .transition(.scale)
+                }
                 Spacer()
                 if let onSpeak {
                     Button(action: onSpeak) {
@@ -231,16 +282,29 @@ private struct FeedbackPanel: View {
                     }
                 }
             }
-            if let typed, !ok || result.attempt.hasTypo {
-                Text("你写的：\(typed)")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+            if isMatch {
+                let missed = results.filter { !$0.isCorrect }
+                if !missed.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(missed, id: \.key) { r in
+                            let card = first.question.group.first { $0.key == r.key }?.card
+                            Text("\(card?.front ?? "") → \(card?.back ?? "")").font(.callout)
+                        }
+                        Text("这几张会在最后再问一次").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+            } else {
+                if let typed, !ok || first.attempt.hasTypo {
+                    Text("你写的：\(typed)")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+                ScrollView {
+                    AnswerDetails(card: first.question.card, showsFront: first.question.game == .listen)
+                }
+                .frame(maxHeight: 180)
+                .fixedSize(horizontal: false, vertical: true)
             }
-            ScrollView {
-                AnswerDetails(card: result.question.card)
-            }
-            .frame(maxHeight: 180)
-            .fixedSize(horizontal: false, vertical: true)
             Button(ok ? "继续" : "知道了", action: onContinue)
                 .buttonStyle(ChunkyButtonStyle(color: color))
         }
@@ -256,10 +320,14 @@ private struct FeedbackPanel: View {
         }
     }
 
-    private var title: String {
-        if !result.isCorrect { return result.attempt.gaveUp ? "答案是" : "正确答案" }
-        if result.attempt.hasTypo { return "对了，注意拼写" }
+    private func title(_ r: LessonRun.Result, ok: Bool) -> String {
+        if r.question.game == .match {
+            let missed = results.count { !$0.isCorrect }
+            return missed == 0 ? "全部配对！" : "配完了，错了 \(missed) 张"
+        }
+        if !ok { return r.attempt.gaveUp ? "答案是" : "正确答案" }
+        if r.attempt.hasTypo { return "对了，注意拼写" }
         let cheers = ["答对了！", "漂亮！", "没错！", "很好！", "就是这样！"]
-        return cheers[Int(UInt(bitPattern: result.question.id.hashValue) % UInt(cheers.count))]
+        return cheers[Int(UInt(bitPattern: r.question.id.hashValue) % UInt(cheers.count))]
     }
 }

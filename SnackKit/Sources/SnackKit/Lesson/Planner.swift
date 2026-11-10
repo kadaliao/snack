@@ -13,12 +13,16 @@ public struct Planner: Sendable {
     public var least: Int
     /// New cards saved room for in a lesson even when there is more than enough due.
     public var newReserved: Int
+    /// Cards in a pairing, made of new and learning cards when a lesson has this
+    /// many short ones of a deck; 0 for none.
+    public var pairing: Int
 
-    public init(size: Int = 10, learnAhead: TimeInterval = 20 * 60, least: Int = 5, newReserved: Int = 2) {
+    public init(size: Int = 10, learnAhead: TimeInterval = 20 * 60, least: Int = 5, newReserved: Int = 2, pairing: Int = 5) {
         self.size = size
         self.learnAhead = learnAhead
         self.least = least
         self.newReserved = newReserved
+        self.pairing = pairing
     }
 
     /// What a lesson started now would find.
@@ -82,32 +86,76 @@ public struct Planner: Sendable {
         let newCap = min(max(newLeft, 0), fresh.count)
         let takeDue = min(due.count, size - min(newCap, newReserved))
         let takeNew = min(newCap, size - takeDue)
-        var picked: [(Entry, Memory?)] = due.prefix(takeDue).map { ($0.entry, $0.memory) }
+        var picked: [(entry: Entry, memory: Memory?)] = due.prefix(takeDue).map { ($0.entry, $0.memory) }
         picked += fresh.prefix(takeNew).map { ($0, nil) }
+        // What comes next, should a pairing free room.
+        var spare: [(entry: Entry, memory: Memory?)] = due.dropFirst(takeDue).map { ($0.entry, $0.memory) }
+        spare += fresh.dropFirst(takeNew).prefix(newCap - takeNew).map { ($0, nil) }
         if picked.count < least {
-            picked += ahead.prefix(size - picked.count).map { ($0.entry, $0.memory) }
+            let more = ahead.prefix(size - picked.count)
+            picked += more.map { ($0.entry, $0.memory) }
+            spare += ahead.dropFirst(more.count).map { ($0.entry, $0.memory) }
+        }
+
+        // New and learning cards short enough pair up in one question, and the
+        // room they free goes to the next cards in line.
+        var pairs: [Entry] = []
+        if pairing >= 4 {
+            let short = picked.filter { item in
+                let stage = Questions.Stage(item.memory)
+                return (stage == .new || stage == .learning) && Questions.isMatchable(item.entry)
+            }
+            let decks = Dictionary(grouping: short, by: \.entry.key.deck)
+            if let best = decks.values.max(by: { $0.count < $1.count }), best.count >= 4 {
+                pairs = distinct(best.map(\.entry)).prefix(pairing).map { $0 }
+            }
+            if pairs.count >= 4 {
+                let paired = Set(pairs.map(\.key))
+                picked.removeAll { paired.contains($0.entry.key) }
+                picked += spare.prefix(pairs.count - 1)
+            } else {
+                pairs = []
+            }
         }
         picked.shuffle(using: &rng)
 
         let byDeck = Dictionary(grouping: entries, by: \.key.deck)
-        return picked.map { entry, memory in
+        var questions = picked.map { entry, memory in
             Questions.make(entry, memory: memory, siblings: byDeck[entry.key.deck] ?? [], using: &rng)
+        }
+        if !pairs.isEmpty {
+            // Not first: a lesson starts with one card.
+            questions.insert(Questions.match(pairs.shuffled(using: &rng)), at: Int.random(in: min(1, questions.count)...questions.count, using: &rng))
+        }
+        return questions
+    }
+
+    /// The entries, without one whose front or back reads like one before it.
+    private func distinct(_ entries: [Entry]) -> [Entry] {
+        var fronts = Set<String>(), backs = Set<String>()
+        return entries.filter {
+            fronts.insert(Answer.comparable($0.card.front)).inserted && backs.insert(Answer.comparable($0.card.back)).inserted
         }
     }
 }
 
 /// A lesson under way: its questions in order, each answer, and the wrong ones
-/// asked once more at the end.
+/// asked once more at the end, and the experience points it earns.
 ///
-/// Only a question's first time counts for FSRS: a card asked again after a wrong
+/// Only a card's first answer counts for FSRS: a card asked again after a wrong
 /// answer is practice, so its grade is nil.
 public struct LessonRun: Sendable {
+    /// How one card went.
     public struct Result: Sendable, Equatable {
         public var question: Question
+        public var key: CardKey
         public var attempt: Attempt
         /// The grade for FSRS; nil for practice.
         public var grade: Grade?
         public var isCorrect: Bool
+        public var xp: Int
+        /// Part of `xp` for right answers in a row.
+        public var bonus: Int
     }
 
     public private(set) var questions: [Question]
@@ -116,6 +164,7 @@ public struct LessonRun: Sendable {
     /// Right answers in a row, and the most in a row so far.
     public private(set) var combo = 0
     public private(set) var bestCombo = 0
+    private var answered = Set<Int>()
     private var rng: SplitMix64
 
     public init(_ questions: [Question], seed: UInt64 = UInt64.random(in: .min ... .max)) {
@@ -128,28 +177,52 @@ public struct LessonRun: Sendable {
     }
 
     /// The current question has its answer and waits for `advance()`.
-    public var isAnswered: Bool { results.count > index }
+    public var isAnswered: Bool { answered.contains(index) }
     public var isFinished: Bool { index >= questions.count }
 
-    /// How far along, 0 to 1: answers given over questions there are, the ones
-    /// asked again included.
+    /// How far along, 0 to 1: questions answered over questions there are, the
+    /// ones asked again included.
     public var progress: Double {
-        questions.isEmpty ? 1 : Double(results.count) / Double(questions.count)
+        questions.isEmpty ? 1 : Double(answered.count) / Double(questions.count)
     }
 
-    /// Takes the answer to the current question. A wrong first answer brings the
-    /// card back at the end.
+    /// Takes the answer to the current question: a result for each card it asks.
+    /// A card wrong the first time comes back at the end.
     @discardableResult
-    public mutating func answer(_ attempt: Attempt) -> Result? {
-        guard let q = current, !isAnswered else { return nil }
+    public mutating func answer(_ attempt: Attempt) -> [Result] {
+        guard let q = current, !isAnswered else { return [] }
+        answered.insert(index)
         let isCorrect = attempt.isCorrect && !attempt.gaveUp
-        let grade = q.isRetry ? nil : Grading.grade(attempt, for: q)
         combo = isCorrect ? combo + 1 : 0
         bestCombo = max(bestCombo, combo)
-        if !isCorrect && !q.isRetry { questions.append(q.retry(using: &rng)) }
-        let result = Result(question: q, attempt: attempt, grade: grade, isCorrect: isCorrect)
-        results.append(result)
-        return result
+        let bonus = isCorrect && combo >= Score.comboFrom ? Score.comboBonus : 0
+
+        var made: [Result] = []
+        if q.game == .match {
+            let backs = q.group.map(\.card.back)
+            for entry in q.group {
+                let right = !attempt.missed.contains(entry.key)
+                made.append(Result(
+                    question: q, key: entry.key, attempt: attempt,
+                    grade: q.isRetry ? nil : Grading.grade(paired: entry.key, in: attempt),
+                    isCorrect: right, xp: right ? Score.pair : 0, bonus: 0
+                ))
+                // A card paired wrong comes back as a choice among the pairing's backs.
+                if !right && !q.isRetry {
+                    questions.append(Question(entry: entry, game: .choose, options: backs.shuffled(using: &rng), isRetry: true))
+                }
+            }
+            if bonus > 0 { made[0].xp += bonus; made[0].bonus = bonus }
+        } else {
+            let xp = isCorrect ? (q.isRetry ? Score.practice : Score.answer) + bonus : 0
+            made.append(Result(
+                question: q, key: q.key, attempt: attempt, grade: q.isRetry ? nil : Grading.grade(attempt, for: q),
+                isCorrect: isCorrect, xp: xp, bonus: bonus
+            ))
+            if !isCorrect && !q.isRetry { questions.append(q.retry(using: &rng)) }
+        }
+        results += made
+        return made
     }
 
     public mutating func advance() {
@@ -157,7 +230,14 @@ public struct LessonRun: Sendable {
         index += 1
     }
 
-    /// The first answers, the ones that count.
+    /// Puts another question in place of the current one before it is answered,
+    /// as when the learner cannot listen just now.
+    public mutating func replaceCurrent(_ make: (Question) -> Question) {
+        guard let q = current, !isAnswered else { return }
+        questions[index] = make(q)
+    }
+
+    /// The first answers, the ones that count, one for each card.
     public var graded: [Result] { results.filter { $0.grade != nil } }
 
     public var correct: Int { graded.count { $0.isCorrect } }
@@ -165,4 +245,15 @@ public struct LessonRun: Sendable {
     public var accuracy: Double {
         graded.isEmpty ? 0 : Double(correct) / Double(graded.count)
     }
+
+    /// No first answer wrong.
+    public var isPerfect: Bool { !graded.isEmpty && correct == graded.count }
+
+    /// Points for the answers so far.
+    public var answerXP: Int { results.reduce(0) { $0 + $1.xp } }
+
+    /// Points for finishing, once it is finished.
+    public var finishXP: Int { isFinished ? Score.finished + (isPerfect ? Score.perfect : 0) : 0 }
+
+    public var xp: Int { answerXP + finishXP }
 }

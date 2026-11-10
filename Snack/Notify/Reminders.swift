@@ -24,7 +24,7 @@ enum Reminders {
         }
     }
 
-    static func reschedule(streak: Streak, lessonsToday: Int, goal: Int, now: Date) async {
+    static func reschedule(streak: Streak, xpToday: Int, goal: Int, now: Date) async {
         let center = UNUserNotificationCenter.current()
         center.removeAllPendingNotificationRequests()
         let defaults = UserDefaults.standard
@@ -36,11 +36,11 @@ enum Reminders {
         let today = Day(now)
         for offset in 0..<7 {
             let day = today.adding(offset)
-            if offset == 0 && lessonsToday >= goal { continue }
+            if offset == 0 && xpToday >= goal { continue }
             let body: String = switch offset {
             case 0 where streak.isAtRisk: "🔥 连胜 \(streak.count) 天，今天刷一节就能续上"
-            case 0 where lessonsToday == 0: "今天还没刷。两分钟一节，现在就来？"
-            case 0: "今天的目标还差 \(goal - lessonsToday) 节"
+            case 0 where xpToday == 0: "今天还没刷。两分钟一节，现在就来？"
+            case 0: "今天的目标还差 \(goal - xpToday) XP，大约 \((goal - xpToday + 99) / 100) 节"
             case 1 where streak.isDoneToday: "🔥 连胜 \(streak.count) 天，今天接着来"
             default: idle[(offset + today.day) % idle.count]
             }
@@ -50,7 +50,10 @@ enum Reminders {
         // night, in case the app is not opened tomorrow.
         if at < lastCall {
             if streak.isAtRisk {
-                await add(center, id: "streak-\(today)", day: today, minutes: lastCall, body: "🔥 连胜 \(streak.count) 天今晚就断了，刷一节保住它", now: now)
+                let body = streak.freezes > 0
+                    ? "🔥 连胜 \(streak.count) 天，今天不刷会用掉一张冻结卡"
+                    : "🔥 连胜 \(streak.count) 天今晚就断了，刷一节保住它"
+                await add(center, id: "streak-\(today)", day: today, minutes: lastCall, body: body, now: now)
             }
             if streak.isDoneToday {
                 await add(center, id: "streak-\(today.adding(1))", day: today.adding(1), minutes: lastCall, body: "🔥 连胜 \(streak.count) 天今晚就断了，刷一节保住它", now: now)
