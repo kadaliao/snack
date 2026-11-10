@@ -4,6 +4,7 @@ import SwiftUI
 /// The decks the Inbox has brought, and how the Inbox stands.
 struct DecksView: View {
     let inbox: Inbox
+    let study: Study
 
     var body: some View {
         NavigationStack {
@@ -20,9 +21,9 @@ struct DecksView: View {
                     Section("牌组") {
                         ForEach(inbox.library.sortedDecks, id: \.info.id) { deck in
                             NavigationLink {
-                                DeckView(deck: deck)
+                                DeckView(deck: deck, library: inbox.library, study: study)
                             } label: {
-                                DeckRow(deck: deck)
+                                DeckRow(deck: deck, study: study)
                             }
                         }
                     }
@@ -39,7 +40,7 @@ struct DecksView: View {
                         .textSelection(.enabled)
                 }
             }
-            .navigationTitle("卡片零食")
+            .navigationTitle("牌组")
             .refreshable { inbox.refresh() }
         }
     }
@@ -66,14 +67,20 @@ struct DecksView: View {
 
 private struct DeckRow: View {
     let deck: Library.StoredDeck
+    let study: Study
 
     var body: some View {
         let cards = deck.visible
-        VStack(alignment: .leading, spacing: 4) {
-            Text(deck.info.title).font(.headline)
-            Text("\(cards.count) 张 · \(breakdown(cards))")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+        let studied = cards.count { study.mastery(CardKey(deck: deck.info.id, card: $0.id)) != .new }
+        HStack(spacing: 14) {
+            Ring(value: cards.isEmpty ? 0 : Double(studied) / Double(cards.count), width: 5)
+                .frame(width: 34, height: 34)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(deck.info.title).font(.headline)
+                Text("学过 \(studied)/\(cards.count) · \(breakdown(cards))")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(.vertical, 2)
     }

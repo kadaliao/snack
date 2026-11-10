@@ -34,6 +34,8 @@ final class Inbox {
     private(set) var library: Library
     private(set) var files: [FileStatus] = []
     private(set) var lastMerged: Date?
+    /// Told of fix cards a producer saw again: the same mistake made again.
+    @ObservationIgnored var onRepeated: (([CardKey]) -> Void)?
 
     private let libraryURL: URL
     private var query: NSMetadataQuery?
@@ -138,7 +140,8 @@ final class Inbox {
                 }
             }
             var merged = library
-            merged.merge(sources, now: .now)
+            let change = merged.merge(sources, now: .now)
+            if !change.repeated.isEmpty { onRepeated?(change.repeated) }
             if merged != library {
                 library = merged
                 let url = libraryURL
